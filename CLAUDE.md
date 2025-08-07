@@ -30,3 +30,4 @@ and so that I can see when updates are available.
 ### DevEx
 
 * All operations defined in a Justfile
+* Use uv for managing Python environment
