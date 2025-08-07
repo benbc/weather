@@ -230,7 +230,7 @@ class TestGetLymeRegisLandsEndForecast:
 
     @responses.activate
     def test_returns_none_when_section_has_no_marine_card_parent(self):
-        """Test that None is returned when h2 exists but has no marine-card section parent."""
+        """Test that None is returned when h2 exists but has no marine-card parent."""
         html_content = """
         <html>
             <h2 class="card-name" id="area8">

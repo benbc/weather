@@ -32,7 +32,7 @@ def get_forecast_date(url: str) -> str | None:
 
 def get_lyme_regis_lands_end_forecast(url: str) -> dict | None:
     """
-    Scrape the forecast for "Lyme Regis to Lands End including the Isles of Scilly" (Area 8).
+    Scrape the forecast for "Lyme Regis to Lands End including the Isles of Scilly".
 
     Args:
         url: The URL of the Met Office forecast page
