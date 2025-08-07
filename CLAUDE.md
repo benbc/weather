@@ -15,6 +15,10 @@ and so that I can see when updates are available.
 * When picking up a new task, describe the goal and your approach in the Current task section
 * Maintain a checklist when working on a task
 
+## Code style
+
+* Prefer to fail fast rather than including fall-backs and defaults
+
 ## Technology
 
 ### Stack
