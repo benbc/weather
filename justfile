@@ -9,3 +9,11 @@ render:
 # Run tests
 test:
     uv run pytest
+
+# Run tests with coverage report
+coverage:
+    uv run pytest --cov-report=html
+
+# Pre-commit checks (tests with coverage)
+pre-commit:
+    uv run pytest

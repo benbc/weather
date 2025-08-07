@@ -11,17 +11,8 @@
 - [x] Work out why Claude config isn't being picked up (commit authoring)
 - [x] Add desktop notifictions to Claude config
 - [x] Add tests
-- [ ] "100%" code coverage
+- [x] "100%" code coverage
 - [ ] Add code formating with ruff
 - [ ] When the workflow runs on GH we won't be able to push directly
 
 ## Current task
-
-### Goal
-Require 100% code coverage but allow for exclusions
-
-### Approach
-* use coverage module
-* configure excluded lines in pyproject.yaml
-
-### Checklist
