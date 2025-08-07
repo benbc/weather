@@ -1,10 +1,8 @@
-from typing import Optional
-
 import requests
 from bs4 import BeautifulSoup
 
 
-def get_forecast_date(url: str) -> Optional[str]:
+def get_forecast_date(url: str) -> str | None:
     """
     Scrape the latest forecast date from Met Office inshore waters forecast page.
 

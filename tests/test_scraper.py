@@ -1,5 +1,7 @@
 import pytest
+import requests
 import responses
+
 from weather.scraper import get_forecast_date
 
 
@@ -18,14 +20,11 @@ class TestGetForecastDate:
         </html>
         """
         responses.add(
-            responses.GET,
-            "https://example.com/forecast",
-            body=html_content,
-            status=200
+            responses.GET, "https://example.com/forecast", body=html_content, status=200
         )
-        
+
         result = get_forecast_date("https://example.com/forecast")
-        
+
         assert result == "Tuesday 07 Jan 2025 at 05:00"
 
     @responses.activate
@@ -42,14 +41,11 @@ class TestGetForecastDate:
         </html>
         """
         responses.add(
-            responses.GET,
-            "https://example.com/forecast",
-            body=html_content,
-            status=200
+            responses.GET, "https://example.com/forecast", body=html_content, status=200
         )
-        
+
         result = get_forecast_date("https://example.com/forecast")
-        
+
         assert result == "Tuesday 07 Jan 2025 at 05:00"
 
     @responses.activate
@@ -65,14 +61,11 @@ class TestGetForecastDate:
         </html>
         """
         responses.add(
-            responses.GET,
-            "https://example.com/forecast",
-            body=html_content,
-            status=200
+            responses.GET, "https://example.com/forecast", body=html_content, status=200
         )
-        
+
         result = get_forecast_date("https://example.com/forecast")
-        
+
         assert result == "Tuesday 07 Jan 2025 at 05:00"
 
     @responses.activate
@@ -88,12 +81,9 @@ class TestGetForecastDate:
         </html>
         """
         responses.add(
-            responses.GET,
-            "https://example.com/forecast",
-            body=html_content,
-            status=200
+            responses.GET, "https://example.com/forecast", body=html_content, status=200
         )
-        
+
         with pytest.raises(Exception, match="Could not find latest forecast date"):
             get_forecast_date("https://example.com/forecast")
 
@@ -106,25 +96,18 @@ class TestGetForecastDate:
         </html>
         """
         responses.add(
-            responses.GET,
-            "https://example.com/forecast",
-            body=html_content,
-            status=200
+            responses.GET, "https://example.com/forecast", body=html_content, status=200
         )
-        
+
         with pytest.raises(Exception, match="Could not find latest forecast date"):
             get_forecast_date("https://example.com/forecast")
 
     @responses.activate
     def test_handles_http_error(self):
         """Test that HTTP errors are properly raised."""
-        responses.add(
-            responses.GET,
-            "https://example.com/forecast",
-            status=404
-        )
-        
-        with pytest.raises(Exception):
+        responses.add(responses.GET, "https://example.com/forecast", status=404)
+
+        with pytest.raises(requests.HTTPError):
             get_forecast_date("https://example.com/forecast")
 
     @responses.activate
@@ -140,12 +123,9 @@ class TestGetForecastDate:
         </html>
         """
         responses.add(
-            responses.GET,
-            "https://example.com/forecast",
-            body=html_content,
-            status=200
+            responses.GET, "https://example.com/forecast", body=html_content, status=200
         )
-        
+
         result = get_forecast_date("https://example.com/forecast")
-        
+
         assert result == "Tuesday 07 Jan 2025 at 05:00"

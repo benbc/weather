@@ -12,7 +12,6 @@
 - [x] Add desktop notifictions to Claude config
 - [x] Add tests
 - [x] "100%" code coverage
-- [ ] Add code formating with ruff
-- [ ] When the workflow runs on GH we won't be able to push directly
+- [x] Add code formating with ruff
 
 ## Current task
