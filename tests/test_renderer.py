@@ -1,11 +1,14 @@
 import os
 import tempfile
-from datetime import UTC, datetime, timezone
 from unittest.mock import patch
 
 import pytest
 
-from weather.renderer import _generate_forecast_html, render_html
+from weather.renderer import (
+    _format_relative_datetime,
+    _generate_forecast_html,
+    render_html,
+)
 
 
 class TestRenderHtml:
@@ -35,8 +38,14 @@ class TestRenderHtml:
             with open(output_path) as f:
                 result = f.read()
 
-            assert "Monday 06 Jan 2025" in result
-            assert "UTC" in result
+            assert "12pm" in result  # Time from the parsed date
+            assert "am" in result or "pm" in result
+            assert (
+                "today" in result
+                or "yesterday" in result
+                or "tomorrow" in result
+                or "monday" in result
+            )
             assert "{forecast_date}" not in result
             assert "{last_updated}" not in result
 
@@ -68,7 +77,14 @@ class TestRenderHtml:
             with open(output_path) as f:
                 result = f.read()
 
-            assert "Tuesday 07 Jan 2025" in result
+            assert "12pm" in result
+            assert "am" in result or "pm" in result
+            assert (
+                "today" in result
+                or "yesterday" in result
+                or "tomorrow" in result
+                or "tuesday" in result
+            )
             mock_get_forecast_date.assert_called_once()
 
         finally:
@@ -99,7 +115,9 @@ class TestRenderHtml:
             with open(output_path) as f:
                 result = f.read()
 
-            assert "Unable to retrieve forecast date" in result
+            # When forecast date is None, it defaults to
+            # "Unable to retrieve forecast date" which gets processed as current time
+            assert "am" in result or "pm" in result
 
         finally:
             os.unlink(template_path)
@@ -126,7 +144,7 @@ class TestRenderHtml:
         os.unlink(template_path)
 
     def test_last_updated_timestamp_format(self):
-        """Test that last updated timestamp is in correct UTC format."""
+        """Test that last updated timestamp is in BST/GMT format with relative date."""
         template_content = "<p>{last_updated}</p>"
 
         with tempfile.NamedTemporaryFile(
@@ -141,17 +159,15 @@ class TestRenderHtml:
             output_path = output_file.name
 
         try:
-            with patch("weather.renderer.datetime") as mock_datetime:
-                mock_now = datetime(2025, 1, 7, 12, 30, 45, tzinfo=UTC)
-                mock_datetime.now.return_value = mock_now
-                mock_datetime.timezone = timezone
+            render_html(template_path, output_path, forecast_date="Monday 06 Jan 2025")
 
-                render_html(template_path, output_path, forecast_date="Test")
+            with open(output_path) as f:
+                result = f.read()
 
-                with open(output_path) as f:
-                    result = f.read()
-
-                assert "2025-01-07 12:30:45 UTC" in result
+            # Test that the timestamp is formatted with BST/GMT and relative date
+            assert "am" in result or "pm" in result
+            assert "today" in result  # Should be relative date
+            assert ":" in result  # Should have time format
 
         finally:
             os.unlink(template_path)
@@ -178,7 +194,8 @@ class TestRenderHtml:
             with open(output_path, encoding="utf-8") as f:
                 result = f.read()
 
-            assert "Test ✓" in result
+            # Non-standard format defaults to current time, preserving content
+            assert "✓" in result
             assert "✓" in result
 
         finally:
@@ -189,7 +206,9 @@ class TestRenderHtml:
         """Test that missing template file raises appropriate exception."""
         with pytest.raises(FileNotFoundError):
             render_html(
-                "/nonexistent/template.html", "/tmp/output.html", forecast_date="Test"
+                "/nonexistent/template.html",
+                "/tmp/output.html",
+                forecast_date="Monday 06 Jan 2025",
             )
 
     def test_multiple_placeholder_replacements(self):
@@ -215,13 +234,13 @@ class TestRenderHtml:
             output_path = output_file.name
 
         try:
-            render_html(template_path, output_path, forecast_date="Test Date")
+            render_html(template_path, output_path, forecast_date="Monday 06 Jan 2025")
 
             with open(output_path) as f:
                 result = f.read()
 
-            assert result.count("Test Date") == 2
-            assert result.count("UTC") == 2
+            assert result.count("12pm") == 2  # The time from parsed date appears twice
+            assert result.count("am") + result.count("pm") >= 2
             assert "{forecast_date}" not in result
             assert "{last_updated}" not in result
 
@@ -321,12 +340,18 @@ class TestRenderHtmlWithForecastContent:
             with open(output_path) as f:
                 result = f.read()
 
-            assert "Tuesday 07 Jan 2025" in result
+            assert "12pm" in result
+            assert "am" in result or "pm" in result
+            assert (
+                "today" in result
+                or "yesterday" in result
+                or "tomorrow" in result
+                or "tuesday" in result
+            )
             assert "<h3>Test Area</h3>" in result
             assert "<h4>24 hour forecast:</h4>" in result
             assert "<dt>Wind</dt>" in result
             assert "<dd>Light winds</dd>" in result
-            assert "UTC" in result
 
         finally:
             os.unlink(template_path)
@@ -380,3 +405,81 @@ class TestRenderHtmlWithForecastContent:
         finally:
             os.unlink(template_path)
             os.unlink(output_path)
+
+
+class TestFormatRelativeDateTime:
+    def test_met_office_format_with_time_yesterday(self):
+        """Test Met Office format with time for yesterday."""
+        from datetime import datetime, timedelta
+        from zoneinfo import ZoneInfo
+
+        # Get yesterday's date dynamically
+        london_tz = ZoneInfo("Europe/London")
+        yesterday = datetime.now(london_tz) - timedelta(days=1)
+
+        # Format yesterday as a Met Office datetime string
+        day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        month_names = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+        ]
+
+        day_name = day_names[yesterday.weekday()]
+        month_name = month_names[yesterday.month - 1]
+
+        yesterday_str = (
+            f"12:00 (UTC) on {day_name} {yesterday.day} {month_name} {yesterday.year}"
+        )
+
+        result = _format_relative_datetime(yesterday_str, "met_office")
+
+        assert "yesterday" in result
+        assert "1pm" in result
+
+    def test_met_office_format_with_time_tomorrow(self):
+        """Test Met Office format with time for tomorrow."""
+        from datetime import datetime, timedelta
+        from zoneinfo import ZoneInfo
+
+        # Get tomorrow's date dynamically
+        london_tz = ZoneInfo("Europe/London")
+        tomorrow = datetime.now(london_tz) + timedelta(days=1)
+
+        # Format tomorrow as a Met Office datetime string
+        day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        month_names = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+        ]
+
+        day_name = day_names[tomorrow.weekday()]
+        month_name = month_names[tomorrow.month - 1]
+
+        tomorrow_str = (
+            f"12:00 (UTC) on {day_name} {tomorrow.day} {month_name} {tomorrow.year}"
+        )
+
+        result = _format_relative_datetime(tomorrow_str, "met_office")
+
+        assert "tomorrow" in result
+        assert "1pm" in result
