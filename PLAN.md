@@ -5,23 +5,23 @@
 - [x] Describe initial plan
 - [x] Write simple code to scrape one piece of information:
       latest forecast date from https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast
-- [ ] Render one piece of information in a simple web page
+- [x] Render one piece of information in a simple web page
+- [ ] Locate forecast data using HTML structure rather than a regex
 - [ ] Deploy the simple application
 
 ## Current task
 
 ### Goal
-Write simple code to scrape the latest forecast date from the Met Office inshore waters forecast page
+Render the forecast date in a simple web page
 
 ### Approach
-1. Set up Python environment with required dependencies (requests, BeautifulSoup)
-2. Create a simple script to fetch and parse the webpage
-3. Extract the forecast date from the page content
-4. Print or return the date for verification
+1. Create a simple HTML template to display the forecast information
+2. Create a Python script to generate static HTML using the scraped data
+3. Integrate the scraper with the HTML renderer
+4. Test the complete web page generation
 
 ### Checklist
-- [x] Set up Python project structure
-- [x] Install required dependencies (requests, beautifulsoup4)
-- [x] Write scraper function to fetch webpage
-- [x] Parse HTML to extract forecast date
-- [x] Test the scraper with the target URL
+- [x] Create HTML template for displaying forecast date
+- [x] Create Python script to render the web page
+- [x] Integrate scraper with web page renderer
+- [x] Test the complete web page generation
