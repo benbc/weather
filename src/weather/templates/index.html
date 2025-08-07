@@ -69,6 +69,32 @@
             margin-bottom: 8px;
             color: #34495e;
         }
+        .chart-info {
+            background: #f4f4f4;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #e74c3c;
+        }
+        .chart-info h2 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .chart-link {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        .chart-link:hover {
+            background: #c0392b;
+            color: white;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -89,6 +115,19 @@
     
     <div class="forecast-content">
         {forecast_content}
+    </div>
+    
+    <div class="chart-info">
+        <h2>ECMWF Medium-Range Wind Charts</h2>
+        <div class="forecast-date">
+            Latest forecast: {ecmwf_forecast_time}
+        </div>
+        <div class="source">
+            <a href="{ecmwf_chart_url}" class="chart-link" target="_blank">View Wind Charts →</a>
+        </div>
+        <div class="source" style="margin-top: 10px;">
+            Source: <a href="https://charts.ecmwf.int/products/medium-wind-10m">ECMWF Charts</a>
+        </div>
     </div>
     
     <div class="last-updated">

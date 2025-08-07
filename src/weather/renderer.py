@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from pathlib import Path
 
-from .scraper import get_forecast_date, get_lyme_regis_lands_end_forecast
+from .scraper import get_forecast_date, get_lyme_regis_lands_end_forecast, get_latest_ecmwf_base_time
 
 
 def _generate_forecast_html(forecast_content: dict | None) -> str:
@@ -41,6 +41,7 @@ def render_html(
     output_path: str,
     forecast_date: str | None = None,
     forecast_content: dict | None = None,
+    ecmwf_data: dict | None = None,
 ) -> None:
     """
     Render the HTML template with forecast data and save to output path.
@@ -50,6 +51,7 @@ def render_html(
         output_path: Path where the rendered HTML should be saved
         forecast_date: The forecast date to display, if None will scrape fresh data
         forecast_content: The forecast content dict, if None will scrape fresh data
+        ecmwf_data: The ECMWF data dict, if None will generate fresh data
     """
     # Read the template
     with open(template_path, encoding="utf-8") as f:
@@ -72,6 +74,13 @@ def render_html(
     # Generate forecast HTML
     forecast_html = _generate_forecast_html(forecast_content)
 
+    # Get ECMWF data if not provided
+    if ecmwf_data is None:
+        ecmwf_data = get_latest_ecmwf_base_time()
+
+    # Generate ECMWF chart URL
+    ecmwf_chart_url = f"https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe&base_time={ecmwf_data['base_time']}"
+
     # Get current timestamp in UTC
     last_updated = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
@@ -79,6 +88,8 @@ def render_html(
     rendered_html = template.replace("{forecast_date}", forecast_date)
     rendered_html = rendered_html.replace("{last_updated}", last_updated)
     rendered_html = rendered_html.replace("{forecast_content}", forecast_html)
+    rendered_html = rendered_html.replace("{ecmwf_forecast_time}", ecmwf_data["readable_time"])
+    rendered_html = rendered_html.replace("{ecmwf_chart_url}", ecmwf_chart_url)
 
     # Ensure output directory exists
     output_dir = Path(output_path).parent

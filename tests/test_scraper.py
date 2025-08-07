@@ -1,8 +1,10 @@
 import pytest
 import requests
 import responses
+from datetime import datetime, timezone
+from unittest.mock import patch
 
-from weather.scraper import get_forecast_date, get_lyme_regis_lands_end_forecast
+from weather.scraper import get_forecast_date, get_lyme_regis_lands_end_forecast, get_latest_ecmwf_base_time
 
 
 class TestGetForecastDate:
@@ -304,3 +306,72 @@ class TestGetLymeRegisLandsEndForecast:
         result = get_lyme_regis_lands_end_forecast("https://example.com/forecast")
 
         assert result is None
+
+
+class TestGetLatestEcmwfBaseTime:
+    def test_returns_base_time_dict_with_required_fields(self):
+        """Test that get_latest_ecmwf_base_time returns dict with required fields."""
+        result = get_latest_ecmwf_base_time()
+        
+        assert isinstance(result, dict)
+        assert "base_time" in result
+        assert "readable_time" in result
+        assert "datetime" in result
+        
+        # Check base_time format (YYYYMMDDHHMM)
+        assert len(result["base_time"]) == 12
+        assert result["base_time"].isdigit()
+        
+        # Check readable_time contains UTC
+        assert "UTC" in result["readable_time"]
+        
+    def test_base_time_format_matches_ecmwf_pattern(self):
+        """Test that base_time follows ECMWF format pattern."""
+        result = get_latest_ecmwf_base_time()
+        base_time = result["base_time"]
+        
+        # Extract components
+        year = int(base_time[:4])
+        month = int(base_time[4:6])
+        day = int(base_time[6:8])
+        hour = int(base_time[8:10])
+        minute = int(base_time[10:12])
+        
+        # Validate ranges
+        assert 2020 <= year <= 2030  # Reasonable year range
+        assert 1 <= month <= 12
+        assert 1 <= day <= 31
+        assert hour in [0, 6, 12, 18]  # ECMWF forecast hours
+        assert minute == 0  # Always 00 minutes
+        
+    def test_returns_consistent_format_across_calls(self):
+        """Test that multiple calls return consistent format."""
+        result1 = get_latest_ecmwf_base_time()
+        result2 = get_latest_ecmwf_base_time()
+        
+        # Should have same structure
+        assert set(result1.keys()) == set(result2.keys())
+        
+        # Base time format should be consistent
+        assert len(result1["base_time"]) == len(result2["base_time"]) == 12
+        
+    def test_readable_time_format(self):
+        """Test that readable_time has expected format."""
+        result = get_latest_ecmwf_base_time()
+        readable = result["readable_time"]
+        
+        # Should contain expected components
+        assert "UTC" in readable
+        assert ":" in readable  # Time separator
+        assert any(day in readable for day in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
+        
+    def test_datetime_object_consistency(self):
+        """Test that datetime object matches base_time string."""
+        result = get_latest_ecmwf_base_time()
+        
+        # Extract datetime components
+        dt = result["datetime"]
+        expected_base_time = dt.strftime("%Y%m%d%H%M")
+        
+        assert result["base_time"] == expected_base_time
+        

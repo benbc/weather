@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime, timedelta, timezone
 
 
 def get_forecast_date(url: str) -> str | None:
@@ -79,6 +80,48 @@ def get_lyme_regis_lands_end_forecast(url: str) -> dict | None:
     return forecast_data if forecast_data["sections"] else None
 
 
+def get_latest_ecmwf_base_time() -> dict:
+    """
+    Calculate the most recent likely available ECMWF forecast base time.
+    
+    ECMWF runs forecasts at 00, 06, 12, and 18 UTC daily, with dissemination 
+    occurring approximately 6-8 hours after each base time.
+    
+    Returns:
+        Dictionary containing base_time string (YYYYMMDDHHMM format) and 
+        human-readable description
+    """
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    
+    # Define the 4 daily forecast times
+    forecast_hours = [0, 6, 12, 18]
+    
+    # Find the most recent forecast time that is likely available
+    # Account for ~6-8 hour dissemination delay
+    available_time = now - timedelta(hours=7)  # Conservative 7-hour delay
+    
+    # Find the most recent forecast hour before the available_time
+    for hour in reversed(forecast_hours):
+        forecast_time = available_time.replace(
+            hour=hour, minute=0, second=0, microsecond=0
+        )
+        if forecast_time <= available_time:
+            base_time = forecast_time
+            break
+    
+    # Format as YYYYMMDDHHMM
+    base_time_str = base_time.strftime("%Y%m%d%H%M")
+    
+    # Create human-readable description
+    readable_time = base_time.strftime("%H:%M UTC on %a %d %b %Y")
+    
+    return {
+        "base_time": base_time_str,
+        "readable_time": readable_time,
+        "datetime": base_time
+    }
+
+
 if __name__ == "__main__":
     url = "https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast"
     forecast_date = get_forecast_date(url)
@@ -93,3 +136,9 @@ if __name__ == "__main__":
                 print(f"  {item['category']}: {item['description']}")
     else:
         print("Could not retrieve Lyme Regis to Lands End forecast")
+    
+    ecmwf_data = get_latest_ecmwf_base_time()
+    print(f"\nECMWF Latest forecast: {ecmwf_data['readable_time']}")
+    print(f"Base time: {ecmwf_data['base_time']}")
+    ecmwf_url = f"https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe&base_time={ecmwf_data['base_time']}"
+    print(f"Chart URL: {ecmwf_url}")
