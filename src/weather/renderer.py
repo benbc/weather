@@ -1,7 +1,13 @@
 from datetime import UTC, datetime
 from pathlib import Path
 
-from .scraper import get_forecast_date, get_lyme_regis_lands_end_forecast, get_latest_ecmwf_base_time
+from .scraper import (
+    generate_meteogram_url,
+    get_forecast_date,
+    get_latest_ecmwf_base_time,
+    get_lyme_regis_lands_end_forecast,
+    get_sailing_locations,
+)
 
 
 def _generate_forecast_html(forecast_content: dict | None) -> str:
@@ -32,6 +38,39 @@ def _generate_forecast_html(forecast_content: dict | None) -> str:
             html_parts.append(f"<dd>{item['description']}</dd>")
 
         html_parts.append("</dl>")
+
+    return "\n".join(html_parts)
+
+
+def _generate_meteogram_locations_html(base_time: str) -> str:
+    """
+    Generate HTML for meteogram location links.
+
+    Args:
+        base_time: ECMWF base time in YYYYMMDDHHMM format
+
+    Returns:
+        HTML string for the meteogram locations
+    """
+    locations = get_sailing_locations()
+    html_parts = []
+
+    for location in locations:
+        meteogram_url = generate_meteogram_url(
+            location["lat"], location["lon"], base_time
+        )
+
+        html_parts.append('<div class="location-item">')
+        html_parts.append(f'<span class="location-name">{location["name"]}</span>')
+        html_parts.append(
+            f'<span class="location-description">({location["description"]})</span>'
+        )
+        html_parts.append("<br>")
+        html_parts.append(
+            f'<a href="{meteogram_url}" class="meteogram-link" '
+            f'target="_blank">View Meteogram →</a>'
+        )
+        html_parts.append("</div>")
 
     return "\n".join(html_parts)
 
@@ -81,6 +120,11 @@ def render_html(
     # Generate ECMWF chart URL
     ecmwf_chart_url = f"https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe&base_time={ecmwf_data['base_time']}"
 
+    # Generate meteogram locations HTML
+    meteogram_locations_html = _generate_meteogram_locations_html(
+        ecmwf_data["base_time"]
+    )
+
     # Get current timestamp in UTC
     last_updated = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
@@ -88,8 +132,13 @@ def render_html(
     rendered_html = template.replace("{forecast_date}", forecast_date)
     rendered_html = rendered_html.replace("{last_updated}", last_updated)
     rendered_html = rendered_html.replace("{forecast_content}", forecast_html)
-    rendered_html = rendered_html.replace("{ecmwf_forecast_time}", ecmwf_data["readable_time"])
+    rendered_html = rendered_html.replace(
+        "{ecmwf_forecast_time}", ecmwf_data["readable_time"]
+    )
     rendered_html = rendered_html.replace("{ecmwf_chart_url}", ecmwf_chart_url)
+    rendered_html = rendered_html.replace(
+        "{meteogram_locations}", meteogram_locations_html
+    )
 
     # Ensure output directory exists
     output_dir = Path(output_path).parent

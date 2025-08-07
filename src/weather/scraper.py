@@ -1,6 +1,7 @@
+from datetime import datetime, timedelta, timezone
+
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta, timezone
 
 
 def get_forecast_date(url: str) -> str | None:
@@ -83,23 +84,23 @@ def get_lyme_regis_lands_end_forecast(url: str) -> dict | None:
 def get_latest_ecmwf_base_time() -> dict:
     """
     Calculate the most recent likely available ECMWF forecast base time.
-    
-    ECMWF runs forecasts at 00, 06, 12, and 18 UTC daily, with dissemination 
+
+    ECMWF runs forecasts at 00, 06, 12, and 18 UTC daily, with dissemination
     occurring approximately 6-8 hours after each base time.
-    
+
     Returns:
-        Dictionary containing base_time string (YYYYMMDDHHMM format) and 
+        Dictionary containing base_time string (YYYYMMDDHHMM format) and
         human-readable description
     """
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
-    
+    now = datetime.now(timezone.utc).replace(tzinfo=None)  # noqa: UP017
+
     # Define the 4 daily forecast times
     forecast_hours = [0, 6, 12, 18]
-    
+
     # Find the most recent forecast time that is likely available
     # Account for ~6-8 hour dissemination delay
     available_time = now - timedelta(hours=7)  # Conservative 7-hour delay
-    
+
     # Find the most recent forecast hour before the available_time
     for hour in reversed(forecast_hours):
         forecast_time = available_time.replace(
@@ -108,18 +109,59 @@ def get_latest_ecmwf_base_time() -> dict:
         if forecast_time <= available_time:
             base_time = forecast_time
             break
-    
+
     # Format as YYYYMMDDHHMM
     base_time_str = base_time.strftime("%Y%m%d%H%M")
-    
+
     # Create human-readable description
     readable_time = base_time.strftime("%H:%M UTC on %a %d %b %Y")
-    
+
     return {
         "base_time": base_time_str,
         "readable_time": readable_time,
-        "datetime": base_time
+        "datetime": base_time,
     }
+
+
+def get_sailing_locations() -> list[dict]:
+    """
+    Get list of sailing locations with coordinates for meteogram generation.
+
+    Returns:
+        List of location dictionaries with name, description, lat, lon
+    """
+    return [
+        {
+            "name": "The Lizard",
+            "description": "Lizard Peninsula area",
+            "lat": 49.97,
+            "lon": -4.95,
+        },
+        {
+            "name": "River Dart",
+            "description": "1nm off River Dart entrance",
+            "lat": 50.32,
+            "lon": -3.57,
+        },
+    ]
+
+
+def generate_meteogram_url(lat: float, lon: float, base_time: str) -> str:
+    """
+    Generate ECMWF meteogram URL for specific coordinates.
+
+    Args:
+        lat: Latitude in decimal degrees
+        lon: Longitude in decimal degrees
+        base_time: ECMWF base time in YYYYMMDDHHMM format
+
+    Returns:
+        Complete meteogram URL
+    """
+    return (
+        f"https://charts.ecmwf.int/products/opencharts_meteogram?"
+        f"base_time={base_time}&epsgram=classical_15d&lat={lat}&lon={lon}"
+    )
 
 
 if __name__ == "__main__":
@@ -136,9 +178,17 @@ if __name__ == "__main__":
                 print(f"  {item['category']}: {item['description']}")
     else:
         print("Could not retrieve Lyme Regis to Lands End forecast")
-    
+
     ecmwf_data = get_latest_ecmwf_base_time()
     print(f"\nECMWF Latest forecast: {ecmwf_data['readable_time']}")
     print(f"Base time: {ecmwf_data['base_time']}")
     ecmwf_url = f"https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe&base_time={ecmwf_data['base_time']}"
     print(f"Chart URL: {ecmwf_url}")
+
+    print("\nLocation-specific meteograms:")
+    locations = get_sailing_locations()
+    for location in locations:
+        meteogram_url = generate_meteogram_url(
+            location["lat"], location["lon"], ecmwf_data["base_time"]
+        )
+        print(f"{location['name']} ({location['description']}): {meteogram_url}")

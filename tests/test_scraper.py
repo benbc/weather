@@ -1,10 +1,14 @@
 import pytest
 import requests
 import responses
-from datetime import datetime, timezone
-from unittest.mock import patch
 
-from weather.scraper import get_forecast_date, get_lyme_regis_lands_end_forecast, get_latest_ecmwf_base_time
+from weather.scraper import (
+    generate_meteogram_url,
+    get_forecast_date,
+    get_latest_ecmwf_base_time,
+    get_lyme_regis_lands_end_forecast,
+    get_sailing_locations,
+)
 
 
 class TestGetForecastDate:
@@ -312,66 +316,159 @@ class TestGetLatestEcmwfBaseTime:
     def test_returns_base_time_dict_with_required_fields(self):
         """Test that get_latest_ecmwf_base_time returns dict with required fields."""
         result = get_latest_ecmwf_base_time()
-        
+
         assert isinstance(result, dict)
         assert "base_time" in result
         assert "readable_time" in result
         assert "datetime" in result
-        
+
         # Check base_time format (YYYYMMDDHHMM)
         assert len(result["base_time"]) == 12
         assert result["base_time"].isdigit()
-        
+
         # Check readable_time contains UTC
         assert "UTC" in result["readable_time"]
-        
+
     def test_base_time_format_matches_ecmwf_pattern(self):
         """Test that base_time follows ECMWF format pattern."""
         result = get_latest_ecmwf_base_time()
         base_time = result["base_time"]
-        
+
         # Extract components
         year = int(base_time[:4])
         month = int(base_time[4:6])
         day = int(base_time[6:8])
         hour = int(base_time[8:10])
         minute = int(base_time[10:12])
-        
+
         # Validate ranges
         assert 2020 <= year <= 2030  # Reasonable year range
         assert 1 <= month <= 12
         assert 1 <= day <= 31
         assert hour in [0, 6, 12, 18]  # ECMWF forecast hours
         assert minute == 0  # Always 00 minutes
-        
+
     def test_returns_consistent_format_across_calls(self):
         """Test that multiple calls return consistent format."""
         result1 = get_latest_ecmwf_base_time()
         result2 = get_latest_ecmwf_base_time()
-        
+
         # Should have same structure
         assert set(result1.keys()) == set(result2.keys())
-        
+
         # Base time format should be consistent
         assert len(result1["base_time"]) == len(result2["base_time"]) == 12
-        
+
     def test_readable_time_format(self):
         """Test that readable_time has expected format."""
         result = get_latest_ecmwf_base_time()
         readable = result["readable_time"]
-        
+
         # Should contain expected components
         assert "UTC" in readable
         assert ":" in readable  # Time separator
-        assert any(day in readable for day in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
-        
+        assert any(
+            day in readable for day in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        )
+
     def test_datetime_object_consistency(self):
         """Test that datetime object matches base_time string."""
         result = get_latest_ecmwf_base_time()
-        
+
         # Extract datetime components
         dt = result["datetime"]
         expected_base_time = dt.strftime("%Y%m%d%H%M")
-        
+
         assert result["base_time"] == expected_base_time
-        
+
+
+class TestGetSailingLocations:
+    def test_returns_list_of_locations(self):
+        """Test that get_sailing_locations returns a list of location dictionaries."""
+        result = get_sailing_locations()
+
+        assert isinstance(result, list)
+        assert len(result) > 0
+
+        # Check first location structure
+        location = result[0]
+        assert isinstance(location, dict)
+        assert "name" in location
+        assert "description" in location
+        assert "lat" in location
+        assert "lon" in location
+
+        # Check data types
+        assert isinstance(location["name"], str)
+        assert isinstance(location["description"], str)
+        assert isinstance(location["lat"], int | float)
+        assert isinstance(location["lon"], int | float)
+
+    def test_contains_expected_locations(self):
+        """Test that expected sailing locations are included."""
+        result = get_sailing_locations()
+
+        location_names = [loc["name"] for loc in result]
+        assert "The Lizard" in location_names
+        assert "River Dart" in location_names
+
+        # Check specific location data
+        lizard = next(loc for loc in result if loc["name"] == "The Lizard")
+        assert lizard["lat"] == 49.97
+        assert lizard["lon"] == -4.95
+
+        dart = next(loc for loc in result if loc["name"] == "River Dart")
+        assert dart["lat"] == 50.32
+        assert dart["lon"] == -3.57
+
+
+class TestGenerateMeteogramUrl:
+    def test_generates_correct_url_format(self):
+        """Test that meteogram URL is generated with correct format."""
+        lat, lon, base_time = 49.97, -4.95, "202508070000"
+
+        result = generate_meteogram_url(lat, lon, base_time)
+
+        expected_url = (
+            "https://charts.ecmwf.int/products/opencharts_meteogram?"
+            "base_time=202508070000&epsgram=classical_15d&lat=49.97&lon=-4.95"
+        )
+        assert result == expected_url
+
+    def test_handles_negative_coordinates(self):
+        """Test that negative coordinates are handled correctly."""
+        lat, lon, base_time = -12.34, -56.78, "202508070000"
+
+        result = generate_meteogram_url(lat, lon, base_time)
+
+        assert "lat=-12.34" in result
+        assert "lon=-56.78" in result
+
+    def test_handles_positive_coordinates(self):
+        """Test that positive coordinates are handled correctly."""
+        lat, lon, base_time = 12.34, 56.78, "202508070000"
+
+        result = generate_meteogram_url(lat, lon, base_time)
+
+        assert "lat=12.34" in result
+        assert "lon=56.78" in result
+
+    def test_includes_all_required_parameters(self):
+        """Test that all required URL parameters are included."""
+        result = generate_meteogram_url(49.97, -4.95, "202508070000")
+
+        assert "base_time=" in result
+        assert "epsgram=classical_15d" in result
+        assert "lat=" in result
+        assert "lon=" in result
+        assert result.startswith(
+            "https://charts.ecmwf.int/products/opencharts_meteogram?"
+        )
+
+    def test_different_base_times(self):
+        """Test that different base times are handled correctly."""
+        base_times = ["202508070000", "202508070600", "202508071200", "202508071800"]
+
+        for base_time in base_times:
+            result = generate_meteogram_url(49.97, -4.95, base_time)
+            assert f"base_time={base_time}" in result
