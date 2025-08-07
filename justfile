@@ -2,9 +2,13 @@
 scrape:
     uv run python src/weather/scraper.py
 
-# Generate the weather HTML page
+# Generate the weather HTML page (for deployment)
 render:
     uv run python -m src.weather.renderer
+
+# Generate the weather HTML page for local development
+dev-render:
+    uv run python -c "from src.weather.renderer import render_html; render_html('src/weather/templates/index.html', 'output/index.html')"
 
 # Run tests
 test:
