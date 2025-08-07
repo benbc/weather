@@ -14,5 +14,6 @@
 - [x] "100%" code coverage
 - [x] Add code formating with ruff
 - [x] Scrape the latest inshore waters forecast for "Lyme Regis to Lands End" sea area and display it on the page
+- [x] Fix problem with git conflicts in docs/index.html when we change locally and the workflow runs remotely
 
 ## Current task
