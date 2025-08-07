@@ -5,6 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from weather.renderer import (
+    _format_forecast_title,
     _format_relative_datetime,
     _generate_forecast_html,
     render_html,
@@ -278,8 +279,8 @@ class TestGenerateForecastHtml:
             "<h3>Lyme Regis to Lands End including the Isles of Scilly (8)</h3>"
             in result
         )
-        assert "<h4>24 hour forecast:</h4>" in result
-        assert "<h4>Outlook for the following 24 hours:</h4>" in result
+        assert "<h4>Today and tonight:</h4>" in result
+        assert "<h4>Tomorrow:</h4>" in result
         assert '<dl class="forecast-details">' in result
         assert "<dt>Wind</dt>" in result
         assert "<dd>West or southwest 3 to 5</dd>" in result
@@ -349,7 +350,7 @@ class TestRenderHtmlWithForecastContent:
                 or "tuesday" in result
             )
             assert "<h3>Test Area</h3>" in result
-            assert "<h4>24 hour forecast:</h4>" in result
+            assert "From" in result and "today:" in result
             assert "<dt>Wind</dt>" in result
             assert "<dd>Light winds</dd>" in result
 
@@ -483,3 +484,117 @@ class TestFormatRelativeDateTime:
 
         assert "tomorrow" in result
         assert "1pm" in result
+
+
+class TestFormatForecastTitle:
+    def test_24_hour_forecast_title(self):
+        """Test that '24 hour forecast' gets converted to 'Today and tonight'."""
+        result = _format_forecast_title("24 hour forecast:", 0)
+        assert result == "Today and tonight:"
+
+    def test_following_24_hours_title(self):
+        """Test that 'following 24 hours' gets converted to 'Tomorrow'."""
+        result = _format_forecast_title("Outlook for the following 24 hours:", 1)
+        assert result == "Tomorrow:"
+
+    def test_second_section_by_index(self):
+        """Test that section index 1 gets 'Tomorrow' even without specific text."""
+        result = _format_forecast_title("Some other title", 1)
+        assert result == "Tomorrow:"
+
+    def test_third_section_day_after_tomorrow(self):
+        """Test that section index 2 gets 'Day after tomorrow'."""
+        result = _format_forecast_title("Some future forecast", 2)
+        assert result == "Day after tomorrow:"
+
+    def test_unknown_title_preserved(self):
+        """Test that unknown titles are preserved as-is."""
+        result = _format_forecast_title("Unknown forecast period", 5)
+        assert result == "Unknown forecast period"
+
+    def test_with_forecast_issue_time(self):
+        """Test forecast title formatting with actual issue time."""
+        issue_time = "12:00 (UTC) on Thu 7 Aug 2025"
+
+        result = _format_forecast_title("24 hour forecast:", 0, issue_time)
+        assert "From" in result and "today:" in result
+
+        result = _format_forecast_title(
+            "Outlook for the following 24 hours:", 1, issue_time
+        )
+        assert "From" in result and "tomorrow:" in result
+
+    def test_with_unparseable_issue_time(self):
+        """Test handling of unparseable issue time format."""
+        issue_time = "Invalid format"
+
+        result = _format_forecast_title("24 hour forecast:", 0, issue_time)
+        assert "From" in result
+
+    def test_with_no_time_in_issue_time(self):
+        """Test handling of issue time without time component."""
+        issue_time = "Monday 06 Jan 2025"  # No time component
+
+        result = _format_forecast_title("24 hour forecast:", 0, issue_time)
+        assert "From" in result
+
+    def test_section_index_2_with_issue_time(self):
+        """Test third section formatting with issue time."""
+        issue_time = "12:00 (UTC) on Thu 7 Aug 2025"
+
+        result = _format_forecast_title("Some forecast", 2, issue_time)
+        assert "From" in result
+
+    def test_section_index_high_with_issue_time(self):
+        """Test high section index formatting with issue time."""
+        issue_time = "12:00 (UTC) on Thu 7 Aug 2025"
+
+        result = _format_forecast_title("Future forecast", 5, issue_time)
+        assert "From" in result
+
+    def test_exception_handling_in_parsing(self):
+        """Test exception handling when datetime parsing fails."""
+        # This will cause an exception in the months dictionary lookup
+        issue_time = "12:00 (UTC) on Thu 7 InvalidMonth 2025"
+
+        result = _format_forecast_title("24 hour forecast:", 0, issue_time)
+        assert (
+            "From" in result
+        )  # Should still return a result due to exception handling
+
+    def test_yesterday_date_handling(self):
+        """Test handling of forecast sections that start yesterday."""
+        from datetime import datetime, timedelta
+        from zoneinfo import ZoneInfo
+
+        # Create an issue time that when negative section index would be yesterday
+        london_tz = ZoneInfo("Europe/London")
+        yesterday = datetime.now(london_tz) - timedelta(days=1)
+
+        # Format as Met Office issue time
+        day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        month_names = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+        ]
+
+        day_name = day_names[yesterday.weekday()]
+        month_name = month_names[yesterday.month - 1]
+
+        issue_time = (
+            f"12:00 (UTC) on {day_name} {yesterday.day} {month_name} {yesterday.year}"
+        )
+
+        # This should trigger the "yesterday" path when we format section 0 starting from yesterday  # noqa: E501
+        result = _format_forecast_title("24 hour forecast:", 0, issue_time)
+        assert "From" in result and "yesterday" in result

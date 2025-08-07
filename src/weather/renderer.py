@@ -149,12 +149,131 @@ def _format_relative_datetime(dt_str: str, source_format: str = "met_office") ->
     return f"{time_str} {relative_day}"
 
 
-def _generate_forecast_html(forecast_content: dict | None) -> str:
+def _format_forecast_title(
+    title: str, section_index: int, forecast_issue_time: str | None = None
+) -> str:
+    """
+    Convert generic forecast titles to relative date format with start times.
+
+    Args:
+        title: Original forecast title from Met Office
+        section_index: Index of the section (0 = first 24h, 1 = second 24h, etc.)
+        forecast_issue_time: When the forecast was issued (Met Office format)
+
+    Returns:
+        Formatted title with relative dates and start times
+    """
+    if not forecast_issue_time:
+        # Fallback to old behavior without times
+        if "24 hour forecast" in title.lower():
+            return "Today and tonight:"
+        elif "following 24 hours" in title.lower() or section_index == 1:
+            return "Tomorrow:"
+        else:
+            if section_index == 2:
+                return "Day after tomorrow:"
+            else:
+                return title
+
+    # Calculate start time for each section based on issue time
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+
+    london_tz = ZoneInfo("Europe/London")
+
+    # Parse the forecast issue time
+    try:
+        # Try format with time: "12:00 (UTC) on Thu 7 Aug 2025"
+        import re
+
+        match = re.match(
+            r"(\d{1,2}:\d{2}) \(UTC\) on \w+ (\d{1,2}) (\w+) (\d{4})",
+            forecast_issue_time,
+        )
+        if match:
+            time_str, day, month, year = match.groups()
+            months = {
+                "Jan": 1,
+                "Feb": 2,
+                "Mar": 3,
+                "Apr": 4,
+                "May": 5,
+                "Jun": 6,
+                "Jul": 7,
+                "Aug": 8,
+                "Sep": 9,
+                "Oct": 10,
+                "Nov": 11,
+                "Dec": 12,
+            }
+            month_num = months[month]
+
+            # Create issue datetime in UTC
+            issue_utc = datetime(
+                int(year),
+                month_num,
+                int(day),
+                int(time_str.split(":")[0]),
+                int(time_str.split(":")[1]),
+            )
+            issue_utc = issue_utc.replace(tzinfo=UTC)
+        else:
+            # Fallback - assume current time if can't parse
+            issue_utc = datetime.now(UTC)
+    except Exception:
+        # Fallback - assume current time if parsing fails
+        issue_utc = datetime.now(UTC)
+
+    # Calculate section start time
+    section_start_utc = issue_utc + timedelta(hours=24 * section_index)
+    section_start_local = section_start_utc.astimezone(london_tz)
+
+    # Format the time directly instead of double-converting
+    now_local = datetime.now(london_tz)
+    today = now_local.date()
+    start_date = section_start_local.date()
+
+    # Determine relative day
+    yesterday = today - timedelta(days=1)
+    tomorrow = today + timedelta(days=1)
+
+    if start_date == today:
+        day_text = "today"
+    elif start_date == yesterday:
+        day_text = "yesterday"
+    elif start_date == tomorrow:
+        day_text = "tomorrow"
+    else:
+        day_text = section_start_local.strftime("%A").lower()
+
+    # Format time with am/pm, omit minutes if on the hour
+    minute = section_start_local.minute
+    if minute == 0:
+        time_text = (
+            section_start_local.strftime("%I").lstrip("0")
+            + section_start_local.strftime("%p").lower()
+        )
+    else:
+        time_text = (
+            section_start_local.strftime("%I:%M").lstrip("0")
+            + section_start_local.strftime("%p").lower()
+        )
+
+    start_time_formatted = f"{time_text} {day_text}"
+
+    # Generate title based on section
+    return f"From {start_time_formatted}:"
+
+
+def _generate_forecast_html(
+    forecast_content: dict | None, forecast_issue_time: str | None = None
+) -> str:
     """
     Generate HTML for forecast content.
 
     Args:
         forecast_content: The forecast data dictionary
+        forecast_issue_time: When the forecast was issued (Met Office format)
 
     Returns:
         HTML string for the forecast content
@@ -168,8 +287,11 @@ def _generate_forecast_html(forecast_content: dict | None) -> str:
     html_parts.append(f"<h3>{forecast_content['area_name']}</h3>")
 
     # Add each forecast section
-    for section in forecast_content["sections"]:
-        html_parts.append(f"<h4>{section['title']}</h4>")
+    for i, section in enumerate(forecast_content["sections"]):
+        formatted_title = _format_forecast_title(
+            section["title"], i, forecast_issue_time
+        )
+        html_parts.append(f"<h4>{formatted_title}</h4>")
         html_parts.append('<dl class="forecast-details">')
 
         for item in section["content"]:
@@ -250,7 +372,7 @@ def render_html(
         forecast_content = get_lyme_regis_lands_end_forecast(url)
 
     # Generate forecast HTML
-    forecast_html = _generate_forecast_html(forecast_content)
+    forecast_html = _generate_forecast_html(forecast_content, forecast_date)
 
     # Get ECMWF data if not provided
     if ecmwf_data is None:

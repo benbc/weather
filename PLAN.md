@@ -17,7 +17,6 @@
 - [x] Fix problem with git conflicts in docs/index.html when we change locally and the workflow runs remotely
 - [x] Link to ECMWF pressure chart
 - [x] Change all dates/times displayed on the page so they say today/yesterday/tomorrow and use daylight saving times (but don't bother to mention the timezone)
-- [ ] Change "24 hour forecast" and "following 24 hours" in the inshore waters forecast to use the same format as the rest of the page
+- [x] Change "24 hour forecast" and "following 24 hours" in the inshore waters forecast to use the same format as the rest of the page
 
 ## Current task
-
