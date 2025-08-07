@@ -38,6 +38,37 @@
             color: #888;
             margin-top: 30px;
         }
+        .forecast-content {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+        .forecast-content h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            font-size: 1.3em;
+        }
+        .forecast-content h4 {
+            color: #34495e;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        .forecast-details {
+            margin: 10px 0;
+        }
+        .forecast-details dt {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-top: 10px;
+        }
+        .forecast-details dd {
+            margin-left: 20px;
+            margin-bottom: 8px;
+            color: #34495e;
+        }
     </style>
 </head>
 <body>
@@ -54,6 +85,10 @@
         <div class="source">
             Source: <a href="https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast">Met Office Inshore Waters</a>
         </div>
+    </div>
+    
+    <div class="forecast-content">
+        {forecast_content}
     </div>
     
     <div class="last-updated">

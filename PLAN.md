@@ -13,5 +13,6 @@
 - [x] Add tests
 - [x] "100%" code coverage
 - [x] Add code formating with ruff
+- [x] Scrape the latest inshore waters forecast for "Lyme Regis to Lands End" sea area and display it on the page
 
 ## Current task

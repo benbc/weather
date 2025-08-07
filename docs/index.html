@@ -1,63 +1,133 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Forecast - Sailing Information</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .forecast-info {
-            background: #f4f4f4;
-            padding: 20px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .forecast-date {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        .source {
-            font-size: 0.9em;
-            color: #666;
-            margin-top: 10px;
-        }
-        .last-updated {
-            text-align: center;
-            font-size: 0.8em;
-            color: #888;
-            margin-top: 30px;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>Weather Forecast</h1>
-        <p>Sailing weather information aggregator</p>
-    </div>
-    
-    <div class="forecast-info">
-        <h2>Met Office Inshore Waters Forecast</h2>
-        <div class="forecast-date">
-            Latest forecast: 12:00 (UTC) on Thu 7 Aug 2025
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Weather Forecast - Sailing Information</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                line-height: 1.6;
+            }
+            .header {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            .forecast-info {
+                background: #f4f4f4;
+                padding: 20px;
+                border-radius: 5px;
+                margin-bottom: 20px;
+            }
+            .forecast-date {
+                font-size: 1.2em;
+                font-weight: bold;
+                color: #2c3e50;
+            }
+            .source {
+                font-size: 0.9em;
+                color: #666;
+                margin-top: 10px;
+            }
+            .last-updated {
+                text-align: center;
+                font-size: 0.8em;
+                color: #888;
+                margin-top: 30px;
+            }
+            .forecast-content {
+                background: #f9f9f9;
+                padding: 20px;
+                border-radius: 5px;
+                margin-bottom: 20px;
+                border-left: 4px solid #3498db;
+            }
+            .forecast-content h3 {
+                color: #2c3e50;
+                margin-top: 0;
+                font-size: 1.3em;
+            }
+            .forecast-content h4 {
+                color: #34495e;
+                margin-top: 20px;
+                margin-bottom: 10px;
+                font-size: 1.1em;
+            }
+            .forecast-details {
+                margin: 10px 0;
+            }
+            .forecast-details dt {
+                font-weight: bold;
+                color: #2c3e50;
+                margin-top: 10px;
+            }
+            .forecast-details dd {
+                margin-left: 20px;
+                margin-bottom: 8px;
+                color: #34495e;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Weather Forecast</h1>
+            <p>Sailing weather information aggregator</p>
         </div>
-        <div class="source">
-            Source: <a href="https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast">Met Office Inshore Waters</a>
+
+        <div class="forecast-info">
+            <h2>Met Office Inshore Waters Forecast</h2>
+            <div class="forecast-date">
+                Latest forecast: 12:00 (UTC) on Thu 7 Aug 2025
+            </div>
+            <div class="source">
+                Source:
+                <a
+                    href="https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast"
+                    >Met Office Inshore Waters</a
+                >
+            </div>
         </div>
-    </div>
-    
-    <div class="last-updated">
-        Last updated: 2025-08-07 11:09:30 UTC
-    </div>
-</body>
+
+        <div class="forecast-content">
+            <h3>Lyme Regis to Lands End including the Isles of Scilly (8)</h3>
+            <h4>24 hour forecast:</h4>
+            <dl class="forecast-details">
+                <dt>Wind</dt>
+                <dd>
+                    Southwesterly, veering westerly for a time, 4 or 5,
+                    decreasing 3 or 4, occasionally 2 later.
+                </dd>
+                <dt>Sea state</dt>
+                <dd>
+                    Slight or moderate, becoming smooth or slight later in east.
+                </dd>
+                <dt>Weather</dt>
+                <dd>Rain or drizzle at first.</dd>
+                <dt>Visibility</dt>
+                <dd>Moderate or good, occasionally poor at first.</dd>
+            </dl>
+            <h4>Outlook for the following 24 hours:</h4>
+            <dl class="forecast-details">
+                <dt>Wind</dt>
+                <dd>
+                    Westerly or southwesterly, veering northwesterly for a time
+                    in east, 2 to 4, occasionally 5 in east.
+                </dd>
+                <dt>Sea state</dt>
+                <dd>
+                    Mainly moderate to the west of the Lizard peninsula,
+                    otherwise smooth or slight to the east.
+                </dd>
+                <dt>Weather</dt>
+                <dd>Fair.</dd>
+                <dt>Visibility</dt>
+                <dd>Good.</dd>
+            </dl>
+        </div>
+
+        <div class="last-updated">Last updated: 2025-08-07 11:09:30 UTC</div>
+    </body>
 </html>
