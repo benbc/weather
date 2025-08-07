@@ -219,8 +219,8 @@ class TestGetLymeRegisLandsEndForecast:
         assert result["sections"][1]["content"][1]["category"] == "Weather"
 
     @responses.activate
-    def test_returns_none_when_area8_not_found(self):
-        """Test that None is returned when Area 8 section is not found."""
+    def test_raises_exception_when_area8_not_found(self):
+        """Test that exception is raised when Area 8 section is not found."""
         html_content = """
         <html>
             <section class="marine-card" aria-labelledby="area7">
@@ -232,13 +232,14 @@ class TestGetLymeRegisLandsEndForecast:
             responses.GET, "https://example.com/forecast", body=html_content, status=200
         )
 
-        result = get_lyme_regis_lands_end_forecast("https://example.com/forecast")
-
-        assert result is None
+        with pytest.raises(
+            Exception, match="Could not find Area 8.*section in Met Office forecast"
+        ):
+            get_lyme_regis_lands_end_forecast("https://example.com/forecast")
 
     @responses.activate
-    def test_returns_none_when_section_has_no_marine_card_parent(self):
-        """Test that None is returned when h2 exists but has no marine-card parent."""
+    def test_raises_exception_when_section_has_no_marine_card_parent(self):
+        """Test exception is raised when h2 exists but has no marine-card parent."""
         html_content = """
         <html>
             <h2 class="card-name" id="area8">
@@ -251,13 +252,15 @@ class TestGetLymeRegisLandsEndForecast:
             responses.GET, "https://example.com/forecast", body=html_content, status=200
         )
 
-        result = get_lyme_regis_lands_end_forecast("https://example.com/forecast")
-
-        assert result is None
+        with pytest.raises(
+            Exception,
+            match="Found Area 8 heading but could not find marine-card section",
+        ):
+            get_lyme_regis_lands_end_forecast("https://example.com/forecast")
 
     @responses.activate
-    def test_returns_none_when_no_forecast_sections(self):
-        """Test that None is returned when no forecast sections are found."""
+    def test_raises_exception_when_no_forecast_sections(self):
+        """Test that exception is raised when no forecast sections are found."""
         html_content = """
         <html>
             <section class="marine-card" aria-labelledby="area8">
@@ -274,9 +277,11 @@ class TestGetLymeRegisLandsEndForecast:
             responses.GET, "https://example.com/forecast", body=html_content, status=200
         )
 
-        result = get_lyme_regis_lands_end_forecast("https://example.com/forecast")
-
-        assert result is None
+        with pytest.raises(
+            Exception,
+            match="Found Area 8 section but could not extract any forecast data",
+        ):
+            get_lyme_regis_lands_end_forecast("https://example.com/forecast")
 
     @responses.activate
     def test_handles_http_error(self):
@@ -287,8 +292,8 @@ class TestGetLymeRegisLandsEndForecast:
             get_lyme_regis_lands_end_forecast("https://example.com/forecast")
 
     @responses.activate
-    def test_handles_malformed_html_gracefully(self):
-        """Test that malformed HTML structure is handled gracefully."""
+    def test_raises_exception_for_malformed_html(self):
+        """Test that exception is raised for malformed HTML structure."""
         html_content = """
         <html>
             <section class="marine-card" aria-labelledby="area8">
@@ -309,80 +314,14 @@ class TestGetLymeRegisLandsEndForecast:
             responses.GET, "https://example.com/forecast", body=html_content, status=200
         )
 
-        result = get_lyme_regis_lands_end_forecast("https://example.com/forecast")
-
-        assert result is None
+        with pytest.raises(
+            Exception,
+            match="Found Area 8 section but could not extract any forecast data",
+        ):
+            get_lyme_regis_lands_end_forecast("https://example.com/forecast")
 
 
 class TestGetLatestEcmwfBaseTime:
-    def test_returns_base_time_dict_with_required_fields(self):
-        """Test that get_latest_ecmwf_base_time returns dict with required fields."""
-        result = get_latest_ecmwf_base_time()
-
-        assert isinstance(result, dict)
-        assert "base_time" in result
-        assert "readable_time" in result
-        assert "datetime" in result
-
-        # Check base_time format (YYYYMMDDHHMM)
-        assert len(result["base_time"]) == 12
-        assert result["base_time"].isdigit()
-
-        # Check readable_time contains UTC
-        assert "UTC" in result["readable_time"]
-
-    def test_base_time_format_matches_ecmwf_pattern(self):
-        """Test that base_time follows ECMWF format pattern."""
-        result = get_latest_ecmwf_base_time()
-        base_time = result["base_time"]
-
-        # Extract components
-        year = int(base_time[:4])
-        month = int(base_time[4:6])
-        day = int(base_time[6:8])
-        hour = int(base_time[8:10])
-        minute = int(base_time[10:12])
-
-        # Validate ranges
-        assert 2020 <= year <= 2030  # Reasonable year range
-        assert 1 <= month <= 12
-        assert 1 <= day <= 31
-        assert hour in [0, 12]  # ECMWF forecast hours
-        assert minute == 0  # Always 00 minutes
-
-    def test_returns_consistent_format_across_calls(self):
-        """Test that multiple calls return consistent format."""
-        result1 = get_latest_ecmwf_base_time()
-        result2 = get_latest_ecmwf_base_time()
-
-        # Should have same structure
-        assert set(result1.keys()) == set(result2.keys())
-
-        # Base time format should be consistent
-        assert len(result1["base_time"]) == len(result2["base_time"]) == 12
-
-    def test_readable_time_format(self):
-        """Test that readable_time has expected format."""
-        result = get_latest_ecmwf_base_time()
-        readable = result["readable_time"]
-
-        # Should contain expected components
-        assert "UTC" in readable
-        assert ":" in readable  # Time separator
-        assert any(
-            day in readable for day in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        )
-
-    def test_datetime_object_consistency(self):
-        """Test that datetime object matches base_time string."""
-        result = get_latest_ecmwf_base_time()
-
-        # Extract datetime components
-        dt = result["datetime"]
-        expected_base_time = dt.strftime("%Y%m%d%H%M")
-
-        assert result["base_time"] == expected_base_time
-
     @patch("weather.scraper.requests.get")
     def test_extracts_base_time_from_redirect(self, mock_get):
         """Test that base_time is extracted from ECMWF redirect URL."""
@@ -398,59 +337,47 @@ class TestGetLatestEcmwfBaseTime:
         assert "07 Aug 2025" in result["readable_time"]
 
     @patch("weather.scraper.requests.get")
-    def test_handles_redirect_without_base_time(self, mock_get):
-        """Test fallback when redirect URL doesn't contain base_time."""
+    def test_raises_exception_when_no_base_time_in_redirect(self, mock_get):
+        """Test that exception is raised when redirect URL doesn't contain base_time."""
         # Mock response with URL that doesn't contain base_time parameter
         mock_response = mock_get.return_value
         mock_response.url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe"
 
-        result = get_latest_ecmwf_base_time()
-
-        assert isinstance(result, dict)
-        assert "base_time" in result
-        assert "readable_time" in result
-        assert "datetime" in result
-        # Should use fallback logic
-        assert result["base_time"].endswith("1200")
+        with pytest.raises(
+            Exception, match="ECMWF redirect URL does not contain base_time parameter"
+        ):
+            get_latest_ecmwf_base_time()
 
     @patch("weather.scraper.requests.get")
-    def test_handles_request_exceptions(self, mock_get):
-        """Test that request exceptions are handled gracefully."""
+    def test_raises_exception_on_request_failure(self, mock_get):
+        """Test that request exceptions are raised properly."""
         # Mock requests.get to raise an exception
         mock_get.side_effect = requests.RequestException("Connection failed")
 
-        # Should still return a result using fallback logic
-        result = get_latest_ecmwf_base_time()
-
-        assert isinstance(result, dict)
-        assert "base_time" in result
-        assert "readable_time" in result
-        assert "datetime" in result
-        # Should use fallback logic
-        assert result["base_time"].endswith("1200")
+        with pytest.raises(requests.RequestException, match="Connection failed"):
+            get_latest_ecmwf_base_time()
 
     @patch("weather.scraper.requests.get")
-    @patch("weather.scraper.datetime")
-    def test_fallback_with_time_before_noon(self, mock_datetime, mock_get):
-        """Test fallback logic when current time is before noon UTC."""
-        from datetime import datetime
+    def test_raises_exception_when_base_time_malformed(self, mock_get):
+        """Test that exception is raised when base_time format is invalid."""
+        # Mock response with malformed base_time
+        mock_response = mock_get.return_value
+        mock_response.url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe&base_time=invalid"
 
-        # Mock requests.get to raise exception (force fallback)
-        mock_get.side_effect = requests.RequestException("Connection failed")
+        with pytest.raises(
+            Exception, match="Could not extract base_time from ECMWF URL"
+        ):
+            get_latest_ecmwf_base_time()
 
-        # Mock current time to be before noon UTC (e.g., 9am UTC)
-        mock_now = datetime(2025, 8, 7, 9, 0, 0)  # 9am UTC
-        mock_datetime.now.return_value = mock_now
-        mock_datetime.side_effect = lambda *args, **kwargs: datetime(*args, **kwargs)
+    @patch("weather.scraper.requests.get")
+    def test_raises_exception_on_http_error(self, mock_get):
+        """Test that HTTP errors are raised properly."""
+        # Mock requests.get to raise HTTP error
+        mock_response = mock_get.return_value
+        mock_response.raise_for_status.side_effect = requests.HTTPError("404 Not Found")
 
-        # Should use yesterday's 12:00 UTC since today's noon hasn't happened yet
-        result = get_latest_ecmwf_base_time()
-
-        assert isinstance(result, dict)
-        assert result["base_time"].endswith("1200")
-        # Should be yesterday's date (day before mock_now)
-        expected_date = "20250806"  # Day before 2025-08-07
-        assert result["base_time"].startswith(expected_date)
+        with pytest.raises(requests.HTTPError, match="404 Not Found"):
+            get_latest_ecmwf_base_time()
 
 
 class TestGetSailingLocations:

@@ -1,10 +1,10 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
 
 
-def get_forecast_date(url: str) -> str | None:
+def get_forecast_date(url: str) -> str:
     """
     Scrape the latest forecast date from Met Office inshore waters forecast page.
 
@@ -12,7 +12,10 @@ def get_forecast_date(url: str) -> str | None:
         url: The URL of the Met Office forecast page
 
     Returns:
-        The forecast date string if found, None otherwise
+        The forecast date string
+
+    Raises:
+        Exception: If forecast date cannot be found or extracted
     """
     response = requests.get(url)
     response.raise_for_status()
@@ -32,7 +35,7 @@ def get_forecast_date(url: str) -> str | None:
     raise Exception("Could not find latest forecast date")
 
 
-def get_lyme_regis_lands_end_forecast(url: str) -> dict | None:
+def get_lyme_regis_lands_end_forecast(url: str) -> dict:
     """
     Scrape the forecast for "Lyme Regis to Lands End including the Isles of Scilly".
 
@@ -40,7 +43,10 @@ def get_lyme_regis_lands_end_forecast(url: str) -> dict | None:
         url: The URL of the Met Office forecast page
 
     Returns:
-        Dictionary containing the structured forecast data, or None if not found
+        Dictionary containing the structured forecast data
+
+    Raises:
+        Exception: If forecast cannot be found or extracted
     """
     response = requests.get(url)
     response.raise_for_status()
@@ -50,11 +56,14 @@ def get_lyme_regis_lands_end_forecast(url: str) -> dict | None:
     # Find area 8 section
     area8_h2 = soup.find("h2", {"id": "area8"})
     if not area8_h2:
-        return None
+        raise Exception(
+            "Could not find Area 8 (Lyme Regis to Lands End) section in Met Office "
+            "forecast"
+        )
 
     area8_section = area8_h2.find_parent("section", class_="marine-card")
     if not area8_section:
-        return None
+        raise Exception("Found Area 8 heading but could not find marine-card section")
 
     # Extract structured data
     forecast_data = {"area_name": area8_h2.get_text().strip(), "sections": []}
@@ -78,7 +87,10 @@ def get_lyme_regis_lands_end_forecast(url: str) -> dict | None:
 
             forecast_data["sections"].append(section_data)
 
-    return forecast_data if forecast_data["sections"] else None
+    if not forecast_data["sections"]:
+        raise Exception("Found Area 8 section but could not extract any forecast data")
+
+    return forecast_data
 
 
 def get_latest_ecmwf_base_time() -> dict:
@@ -91,54 +103,46 @@ def get_latest_ecmwf_base_time() -> dict:
     Returns:
         Dictionary containing base_time string (YYYYMMDDHHMM format) and
         human-readable description
+
+    Raises:
+        Exception: If ECMWF request fails or base_time cannot be extracted
     """
     base_url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe"
 
-    try:
-        # Request without base_time - ECMWF will redirect to latest available
-        response = requests.get(base_url, timeout=10, allow_redirects=True)
+    # Request without base_time - ECMWF will redirect to latest available
+    response = requests.get(base_url, timeout=10, allow_redirects=True)
+    response.raise_for_status()
 
-        # Extract base_time from the final URL after redirect
-        final_url = response.url
-        if "base_time=" in final_url:
-            # Extract base_time parameter from URL
-            import re
+    # Extract base_time from the final URL after redirect
+    final_url = response.url
+    if "base_time=" not in final_url:
+        raise Exception(
+            f"ECMWF redirect URL does not contain base_time parameter: {final_url}"
+        )
 
-            match = re.search(r"base_time=(\d{12})", final_url)
-            if match:
-                base_time_str = match.group(1)
+    # Extract base_time parameter from URL
+    import re
 
-                # Parse the base time to create readable format
-                year = int(base_time_str[:4])
-                month = int(base_time_str[4:6])
-                day = int(base_time_str[6:8])
-                hour = int(base_time_str[8:10])
-                minute = int(base_time_str[10:12])
+    match = re.search(r"base_time=(\d{12})", final_url)
+    if not match:
+        raise Exception(f"Could not extract base_time from ECMWF URL: {final_url}")
 
-                forecast_dt = datetime(year, month, day, hour, minute)
-                readable_time = forecast_dt.strftime("%H:%M UTC on %a %d %b %Y")
+    base_time_str = match.group(1)
 
-                return {
-                    "base_time": base_time_str,
-                    "readable_time": readable_time,
-                    "datetime": forecast_dt,
-                }
-    except requests.RequestException:
-        pass  # Fall through to fallback
+    # Parse the base time to create readable format
+    year = int(base_time_str[:4])
+    month = int(base_time_str[4:6])
+    day = int(base_time_str[6:8])
+    hour = int(base_time_str[8:10])
+    minute = int(base_time_str[10:12])
 
-    # Fallback: if request fails, use most recent 12:00 UTC
-    now = datetime.now(timezone.utc).replace(tzinfo=None)  # noqa: UP017
-    fallback_time = now.replace(hour=12, minute=0, second=0, microsecond=0)
-    if fallback_time > now:
-        fallback_time -= timedelta(days=1)
-
-    base_time_str = fallback_time.strftime("%Y%m%d%H%M")
-    readable_time = fallback_time.strftime("%H:%M UTC on %a %d %b %Y")
+    forecast_dt = datetime(year, month, day, hour, minute)
+    readable_time = forecast_dt.strftime("%H:%M UTC on %a %d %b %Y")
 
     return {
         "base_time": base_time_str,
         "readable_time": readable_time,
-        "datetime": fallback_time,
+        "datetime": forecast_dt,
     }
 
 

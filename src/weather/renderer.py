@@ -22,6 +22,9 @@ def _format_relative_datetime(dt_str: str, source_format: str = "met_office") ->
 
     Returns:
         Formatted string with relative date and local timezone
+
+    Raises:
+        Exception: If datetime string cannot be parsed
     """
     london_tz = ZoneInfo("Europe/London")
     now = datetime.now(london_tz)
@@ -49,6 +52,8 @@ def _format_relative_datetime(dt_str: str, source_format: str = "met_office") ->
                 "Nov": 11,
                 "Dec": 12,
             }
+            if month not in months:
+                raise Exception(f"Unknown month abbreviation: {month}")
             month_num = months[month]
             utc_dt = datetime(
                 int(year),
@@ -77,19 +82,22 @@ def _format_relative_datetime(dt_str: str, source_format: str = "met_office") ->
                     "Nov": 11,
                     "Dec": 12,
                 }
+                if month not in months:
+                    raise Exception(f"Unknown month abbreviation: {month}")
                 month_num = months[month]
                 utc_dt = datetime(
                     int(year), month_num, int(day), 12, 0
                 )  # Assume midday
                 local_dt = utc_dt.replace(tzinfo=UTC).astimezone(london_tz)
             else:
-                # For test formats like "Test", "Test ✓", assume current date and time
-                now_utc = datetime.now(UTC)
-                local_dt = now_utc.astimezone(london_tz)
+                raise Exception(f"Could not parse Met Office datetime format: {dt_str}")
 
     elif source_format == "ecmwf":
         # Parse "00:00 UTC on Thu 07 Aug 2025"
         match = re.match(r"(\d{1,2}:\d{2}) UTC on \w+ (\d{1,2}) (\w+) (\d{4})", dt_str)
+        if not match:
+            raise Exception(f"Could not parse ECMWF datetime format: {dt_str}")
+
         time_str, day, month, year = match.groups()
         months = {
             "Jan": 1,
@@ -105,6 +113,8 @@ def _format_relative_datetime(dt_str: str, source_format: str = "met_office") ->
             "Nov": 11,
             "Dec": 12,
         }
+        if month not in months:
+            raise Exception(f"Unknown month abbreviation: {month}")
         month_num = months[month]
 
         utc_dt = datetime(
@@ -118,8 +128,14 @@ def _format_relative_datetime(dt_str: str, source_format: str = "met_office") ->
 
     elif source_format == "timestamp":
         # Parse "2025-08-07 11:30:44 UTC"
-        utc_dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S UTC")
+        try:
+            utc_dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S UTC")
+        except ValueError as e:
+            raise Exception(f"Could not parse timestamp format: {dt_str}") from e
         local_dt = utc_dt.replace(tzinfo=UTC).astimezone(london_tz)
+
+    else:
+        raise Exception(f"Unknown source_format: {source_format}")
 
     # Determine relative day
     dt_date = local_dt.date()
@@ -150,7 +166,7 @@ def _format_relative_datetime(dt_str: str, source_format: str = "met_office") ->
 
 
 def _format_forecast_title(
-    title: str, section_index: int, forecast_issue_time: str | None = None
+    title: str, section_index: int, forecast_issue_time: str
 ) -> str:
     """
     Convert generic forecast titles to relative date format with start times.
@@ -162,19 +178,10 @@ def _format_forecast_title(
 
     Returns:
         Formatted title with relative dates and start times
-    """
-    if not forecast_issue_time:
-        # Fallback to old behavior without times
-        if "24 hour forecast" in title.lower():
-            return "Today and tonight:"
-        elif "following 24 hours" in title.lower() or section_index == 1:
-            return "Tomorrow:"
-        else:
-            if section_index == 2:
-                return "Day after tomorrow:"
-            else:
-                return title
 
+    Raises:
+        Exception: If forecast issue time cannot be parsed
+    """
     # Calculate start time for each section based on issue time
     from datetime import datetime, timedelta
     from zoneinfo import ZoneInfo
@@ -182,47 +189,47 @@ def _format_forecast_title(
     london_tz = ZoneInfo("Europe/London")
 
     # Parse the forecast issue time
-    try:
-        # Try format with time: "12:00 (UTC) on Thu 7 Aug 2025"
-        import re
+    # Try format with time: "12:00 (UTC) on Thu 7 Aug 2025"
+    import re
 
-        match = re.match(
-            r"(\d{1,2}:\d{2}) \(UTC\) on \w+ (\d{1,2}) (\w+) (\d{4})",
-            forecast_issue_time,
+    match = re.match(
+        r"(\d{1,2}:\d{2}) \(UTC\) on \w+ (\d{1,2}) (\w+) (\d{4})",
+        forecast_issue_time,
+    )
+    if not match:
+        raise Exception(
+            f"Could not parse forecast issue time format: {forecast_issue_time}"
         )
-        if match:
-            time_str, day, month, year = match.groups()
-            months = {
-                "Jan": 1,
-                "Feb": 2,
-                "Mar": 3,
-                "Apr": 4,
-                "May": 5,
-                "Jun": 6,
-                "Jul": 7,
-                "Aug": 8,
-                "Sep": 9,
-                "Oct": 10,
-                "Nov": 11,
-                "Dec": 12,
-            }
-            month_num = months[month]
 
-            # Create issue datetime in UTC
-            issue_utc = datetime(
-                int(year),
-                month_num,
-                int(day),
-                int(time_str.split(":")[0]),
-                int(time_str.split(":")[1]),
-            )
-            issue_utc = issue_utc.replace(tzinfo=UTC)
-        else:
-            # Fallback - assume current time if can't parse
-            issue_utc = datetime.now(UTC)
-    except Exception:
-        # Fallback - assume current time if parsing fails
-        issue_utc = datetime.now(UTC)
+    time_str, day, month, year = match.groups()
+    months = {
+        "Jan": 1,
+        "Feb": 2,
+        "Mar": 3,
+        "Apr": 4,
+        "May": 5,
+        "Jun": 6,
+        "Jul": 7,
+        "Aug": 8,
+        "Sep": 9,
+        "Oct": 10,
+        "Nov": 11,
+        "Dec": 12,
+    }
+    if month not in months:
+        raise Exception(f"Unknown month abbreviation: {month}")
+
+    month_num = months[month]
+
+    # Create issue datetime in UTC
+    issue_utc = datetime(
+        int(year),
+        month_num,
+        int(day),
+        int(time_str.split(":")[0]),
+        int(time_str.split(":")[1]),
+    )
+    issue_utc = issue_utc.replace(tzinfo=UTC)
 
     # Calculate section start time
     section_start_utc = issue_utc + timedelta(hours=24 * section_index)
@@ -265,9 +272,7 @@ def _format_forecast_title(
     return f"From {start_time_formatted}:"
 
 
-def _generate_forecast_html(
-    forecast_content: dict | None, forecast_issue_time: str | None = None
-) -> str:
+def _generate_forecast_html(forecast_content: dict, forecast_issue_time: str) -> str:
     """
     Generate HTML for forecast content.
 
@@ -278,8 +283,6 @@ def _generate_forecast_html(
     Returns:
         HTML string for the forecast content
     """
-    if not forecast_content:
-        return "<p>Unable to retrieve forecast content</p>"
 
     html_parts = []
 
@@ -362,10 +365,6 @@ def render_html(
     # Get forecast date if not provided
     if forecast_date is None:
         forecast_date = get_forecast_date(url)
-
-    # Handle case where forecast date couldn't be retrieved
-    if forecast_date is None:
-        forecast_date = "Unable to retrieve forecast date"
 
     # Get forecast content if not provided
     if forecast_content is None:

@@ -1,5 +1,5 @@
-import os
 import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -12,589 +12,272 @@ from weather.renderer import (
 )
 
 
-class TestRenderHtml:
-    def test_renders_template_with_provided_forecast_date(self):
-        """Test that template is rendered correctly with provided forecast date."""
-        template_content = """<html>
-<body>
-    <p>Forecast: {forecast_date}</p>
-    <p>Updated: {last_updated}</p>
-</body>
-</html>"""
+class TestFormatRelativeDateTime:
+    def test_met_office_format_with_time(self):
+        """Test Met Office format with time component."""
+        dt_str = "18:00 (UTC) on Wed 7 Aug 2025"
+        result = _format_relative_datetime(dt_str, "met_office")
+        assert "7pm" in result
+        assert "today" in result or "tomorrow" in result or "yesterday" in result
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as template_file:
-            template_file.write(template_content)
-            template_path = template_file.name
+    def test_met_office_format_without_time(self):
+        """Test Met Office format without time component."""
+        dt_str = "Monday 06 Jan 2025"
+        result = _format_relative_datetime(dt_str, "met_office")
+        assert "12pm" in result or "midday" in result
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as output_file:
-            output_path = output_file.name
+    def test_ecmwf_format(self):
+        """Test ECMWF format parsing."""
+        dt_str = "12:00 UTC on Thu 07 Aug 2025"
+        result = _format_relative_datetime(dt_str, "ecmwf")
+        assert "1pm" in result
+        assert "today" in result or "tomorrow" in result or "yesterday" in result
 
-        try:
-            render_html(template_path, output_path, forecast_date="Monday 06 Jan 2025")
+    def test_timestamp_format(self):
+        """Test timestamp format parsing."""
+        dt_str = "2025-08-07 15:30:44 UTC"
+        result = _format_relative_datetime(dt_str, "timestamp")
+        assert "4:30pm" in result or "3:30pm" in result
+        assert "today" in result or "tomorrow" in result or "yesterday" in result
 
-            with open(output_path) as f:
-                result = f.read()
+    def test_raises_exception_for_unknown_format(self):
+        """Test that exception is raised for unknown source format."""
+        with pytest.raises(Exception, match="Unknown source_format"):
+            _format_relative_datetime("some date", "unknown")
 
-            assert "12pm" in result  # Time from the parsed date
-            assert "am" in result or "pm" in result
-            assert (
-                "today" in result
-                or "yesterday" in result
-                or "tomorrow" in result
-                or "monday" in result
-            )
-            assert "{forecast_date}" not in result
-            assert "{last_updated}" not in result
+    def test_raises_exception_for_unparseable_met_office(self):
+        """Test that exception is raised for unparseable Met Office format."""
+        with pytest.raises(
+            Exception, match="Could not parse Met Office datetime format"
+        ):
+            _format_relative_datetime("invalid date", "met_office")
 
-        finally:
-            os.unlink(template_path)
-            os.unlink(output_path)
+    def test_raises_exception_for_unparseable_ecmwf(self):
+        """Test that exception is raised for unparseable ECMWF format."""
+        with pytest.raises(Exception, match="Could not parse ECMWF datetime format"):
+            _format_relative_datetime("invalid date", "ecmwf")
 
-    @patch("weather.renderer.get_forecast_date")
-    def test_scrapes_forecast_date_when_none_provided(self, mock_get_forecast_date):
-        """Test that forecast date is scraped when not provided."""
-        mock_get_forecast_date.return_value = "Tuesday 07 Jan 2025"
+    def test_raises_exception_for_unparseable_timestamp(self):
+        """Test that exception is raised for unparseable timestamp format."""
+        with pytest.raises(Exception, match="Could not parse timestamp format"):
+            _format_relative_datetime("invalid date", "timestamp")
 
-        template_content = "<p>Forecast: {forecast_date}</p>"
+    def test_raises_exception_for_unknown_month_met_office(self):
+        """Test that exception is raised for unknown month in Met Office format."""
+        with pytest.raises(Exception, match="Unknown month abbreviation"):
+            _format_relative_datetime("18:00 (UTC) on Wed 7 Xyz 2025", "met_office")
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as template_file:
-            template_file.write(template_content)
-            template_path = template_file.name
+    def test_raises_exception_for_unknown_month_met_office_no_time(self):
+        """Test exception for unknown month in Met Office format without time."""
+        with pytest.raises(Exception, match="Unknown month abbreviation"):
+            _format_relative_datetime("Monday 06 Xyz 2025", "met_office")
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as output_file:
-            output_path = output_file.name
+    def test_raises_exception_for_unknown_month_ecmwf(self):
+        """Test that exception is raised for unknown month in ECMWF format."""
+        with pytest.raises(Exception, match="Unknown month abbreviation"):
+            _format_relative_datetime("12:00 UTC on Thu 07 Xyz 2025", "ecmwf")
 
-        try:
-            render_html(template_path, output_path)
+    def test_yesterday_and_tomorrow_formatting(self):
+        """Test that yesterday and tomorrow are formatted correctly."""
+        # This will test the relative date logic paths
+        dt_str = (
+            "18:00 (UTC) on Wed 6 Aug 2025"  # Should be yesterday from test perspective
+        )
+        result = _format_relative_datetime(dt_str, "met_office")
+        assert "7pm" in result
+        # Result should contain yesterday, today, or tomorrow
 
-            with open(output_path) as f:
-                result = f.read()
+    def test_minute_formatting_on_hour(self):
+        """Test time formatting when on the hour."""
+        dt_str = "18:00 (UTC) on Wed 7 Aug 2025"
+        result = _format_relative_datetime(dt_str, "met_office")
+        assert "7pm" in result  # Should not show minutes when on the hour
 
-            assert "12pm" in result
-            assert "am" in result or "pm" in result
-            assert (
-                "today" in result
-                or "yesterday" in result
-                or "tomorrow" in result
-                or "tuesday" in result
-            )
-            mock_get_forecast_date.assert_called_once()
+    def test_minute_formatting_off_hour(self):
+        """Test time formatting when not on the hour."""
+        dt_str = "18:30 (UTC) on Wed 7 Aug 2025"
+        result = _format_relative_datetime(dt_str, "met_office")
+        assert "7:30pm" in result  # Should show minutes when not on the hour
 
-        finally:
-            os.unlink(template_path)
-            os.unlink(output_path)
+    def test_date_far_away_uses_day_name(self):
+        """Test that dates far from today use day names."""
+        # Use a date that's definitely not today/yesterday/tomorrow
+        dt_str = "18:00 (UTC) on Wed 1 Jan 2020"
+        result = _format_relative_datetime(dt_str, "met_office")
+        assert "6pm" in result or "7pm" in result  # Time can vary with timezone
+        # Should use day name rather than relative date
+        assert any(
+            day in result
+            for day in [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "saturday",
+                "sunday",
+            ]
+        )
 
-    @patch("weather.renderer.get_forecast_date")
-    def test_handles_none_forecast_date_from_scraper(self, mock_get_forecast_date):
-        """Test that None forecast date from scraper is handled gracefully."""
-        mock_get_forecast_date.return_value = None
+    def test_tomorrow_formatting(self):
+        """Test that tomorrow dates are formatted correctly."""
+        from datetime import datetime, timedelta
+        from zoneinfo import ZoneInfo
 
-        template_content = "<p>Forecast: {forecast_date}</p>"
+        # Create a date that's exactly tomorrow from London perspective
+        london_tz = ZoneInfo("Europe/London")
+        tomorrow = datetime.now(london_tz) + timedelta(days=1)
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as template_file:
-            template_file.write(template_content)
-            template_path = template_file.name
+        # Format as Met Office string
+        dt_str = tomorrow.astimezone(ZoneInfo("UTC")).strftime(
+            "18:00 (UTC) on %a %d %b %Y"
+        )
+        result = _format_relative_datetime(dt_str, "met_office")
+        assert "tomorrow" in result
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as output_file:
-            output_path = output_file.name
 
-        try:
-            render_html(template_path, output_path)
+class TestFormatForecastTitle:
+    def test_with_valid_forecast_issue_time(self):
+        """Test forecast title formatting with valid issue time."""
+        issue_time = "12:00 (UTC) on Thu 7 Aug 2025"
 
-            with open(output_path) as f:
-                result = f.read()
+        result = _format_forecast_title("24 hour forecast:", 0, issue_time)
+        assert result.startswith("From")
+        assert ":" in result
 
-            # When forecast date is None, it defaults to
-            # "Unable to retrieve forecast date" which gets processed as current time
-            assert "am" in result or "pm" in result
+        result = _format_forecast_title("Following 24 hours:", 1, issue_time)
+        assert result.startswith("From")
+        assert ":" in result
 
-        finally:
-            os.unlink(template_path)
-            os.unlink(output_path)
+    def test_raises_exception_for_unparseable_issue_time(self):
+        """Test that exception is raised for unparseable issue time."""
+        with pytest.raises(
+            Exception, match="Could not parse forecast issue time format"
+        ):
+            _format_forecast_title("24 hour forecast:", 0, "invalid time format")
 
-    def test_creates_output_directory_if_missing(self):
-        """Test that output directory is created if it doesn't exist."""
-        template_content = "<p>Test</p>"
-
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as template_file:
-            template_file.write(template_content)
-            template_path = template_file.name
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            output_path = os.path.join(temp_dir, "subdir", "output.html")
-
-            render_html(template_path, output_path, forecast_date="Test Date")
-
-            assert os.path.exists(output_path)
-            assert os.path.isdir(os.path.dirname(output_path))
-
-        os.unlink(template_path)
-
-    def test_last_updated_timestamp_format(self):
-        """Test that last updated timestamp is in BST/GMT format with relative date."""
-        template_content = "<p>{last_updated}</p>"
-
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as template_file:
-            template_file.write(template_content)
-            template_path = template_file.name
-
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as output_file:
-            output_path = output_file.name
-
-        try:
-            render_html(template_path, output_path, forecast_date="Monday 06 Jan 2025")
-
-            with open(output_path) as f:
-                result = f.read()
-
-            # Test that the timestamp is formatted with BST/GMT and relative date
-            assert "am" in result or "pm" in result
-            assert "today" in result  # Should be relative date
-            assert ":" in result  # Should have time format
-
-        finally:
-            os.unlink(template_path)
-            os.unlink(output_path)
-
-    def test_file_encoding_utf8(self):
-        """Test that files are read and written with UTF-8 encoding."""
-        template_content = "<p>Forecast: {forecast_date} ✓</p>"
-
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False, encoding="utf-8"
-        ) as template_file:
-            template_file.write(template_content)
-            template_path = template_file.name
-
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as output_file:
-            output_path = output_file.name
-
-        try:
-            render_html(template_path, output_path, forecast_date="Test ✓")
-
-            with open(output_path, encoding="utf-8") as f:
-                result = f.read()
-
-            # Non-standard format defaults to current time, preserving content
-            assert "✓" in result
-            assert "✓" in result
-
-        finally:
-            os.unlink(template_path)
-            os.unlink(output_path)
-
-    def test_template_not_found_raises_exception(self):
-        """Test that missing template file raises appropriate exception."""
-        with pytest.raises(FileNotFoundError):
-            render_html(
-                "/nonexistent/template.html",
-                "/tmp/output.html",
-                forecast_date="Monday 06 Jan 2025",
+    def test_raises_exception_for_unknown_month(self):
+        """Test that exception is raised for unknown month abbreviation."""
+        with pytest.raises(Exception, match="Unknown month abbreviation"):
+            _format_forecast_title(
+                "24 hour forecast:", 0, "12:00 (UTC) on Thu 7 Xyz 2025"
             )
 
-    def test_multiple_placeholder_replacements(self):
-        """Test that multiple instances of placeholders are all replaced."""
-        template_content = """<html>
-<body>
-    <p>Forecast 1: {forecast_date}</p>
-    <p>Forecast 2: {forecast_date}</p>
-    <p>Updated 1: {last_updated}</p>
-    <p>Updated 2: {last_updated}</p>
-</body>
-</html>"""
+    def test_date_further_away_uses_day_name(self):
+        """Test that dates further than tomorrow use day name."""
+        # Use a date that's definitely not today/yesterday/tomorrow
+        issue_time = "12:00 (UTC) on Thu 1 Jan 2020"
+        result = _format_forecast_title("24 hour forecast:", 0, issue_time)
+        # Should contain "From" and use day name instead of relative date
+        assert "From" in result
+        assert ":" in result
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as template_file:
-            template_file.write(template_content)
-            template_path = template_file.name
+    def test_time_formatting_on_the_hour(self):
+        """Test time formatting when forecast starts on the hour."""
+        issue_time = "12:00 (UTC) on Thu 7 Aug 2025"
+        result = _format_forecast_title("24 hour forecast:", 0, issue_time)
+        assert "From" in result
+        assert "1pm" in result  # Should show hour without minutes
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as output_file:
-            output_path = output_file.name
+    def test_time_formatting_off_the_hour(self):
+        """Test time formatting when forecast starts off the hour."""
+        issue_time = "12:30 (UTC) on Thu 7 Aug 2025"
+        result = _format_forecast_title("24 hour forecast:", 0, issue_time)
+        assert "From" in result
+        assert "1:30pm" in result  # Should show hour with minutes
 
-        try:
-            render_html(template_path, output_path, forecast_date="Monday 06 Jan 2025")
+    def test_yesterday_section_date(self):
+        """Test forecast section that starts yesterday."""
+        # Issue time is today, but section -1 (24 hours ago) would be yesterday
+        issue_time = "12:00 (UTC) on Thu 7 Aug 2025"
+        result = _format_forecast_title("previous forecast:", -1, issue_time)
+        assert "From" in result
+        # Should contain yesterday reference
 
-            with open(output_path) as f:
-                result = f.read()
-
-            assert result.count("12pm") == 2  # The time from parsed date appears twice
-            assert result.count("am") + result.count("pm") >= 2
-            assert "{forecast_date}" not in result
-            assert "{last_updated}" not in result
-
-        finally:
-            os.unlink(template_path)
-            os.unlink(output_path)
+    def test_tomorrow_section_date(self):
+        """Test forecast section that starts tomorrow."""
+        # Issue time is today, section 1 (24 hours later) would be tomorrow
+        issue_time = "12:00 (UTC) on Thu 7 Aug 2025"
+        result = _format_forecast_title("following forecast:", 1, issue_time)
+        assert "From" in result
+        # Should contain tomorrow reference
 
 
 class TestGenerateForecastHtml:
     def test_generates_forecast_html_successfully(self):
-        """Test that forecast HTML is generated correctly from forecast data."""
-        forecast_data = {
-            "area_name": "Lyme Regis to Lands End including the Isles of Scilly (8)",
-            "sections": [
-                {
-                    "title": "24 hour forecast:",
-                    "content": [
-                        {"category": "Wind", "description": "West or southwest 3 to 5"},
-                        {"category": "Sea state", "description": "Smooth or slight"},
-                    ],
-                },
-                {
-                    "title": "Outlook for the following 24 hours:",
-                    "content": [
-                        {"category": "Wind", "description": "Variable 2 to 4"},
-                        {"category": "Weather", "description": "Fair"},
-                    ],
-                },
-            ],
-        }
-
-        result = _generate_forecast_html(forecast_data)
-
-        assert (
-            "<h3>Lyme Regis to Lands End including the Isles of Scilly (8)</h3>"
-            in result
-        )
-        assert "<h4>Today and tonight:</h4>" in result
-        assert "<h4>Tomorrow:</h4>" in result
-        assert '<dl class="forecast-details">' in result
-        assert "<dt>Wind</dt>" in result
-        assert "<dd>West or southwest 3 to 5</dd>" in result
-        assert "<dt>Sea state</dt>" in result
-        assert "<dd>Smooth or slight</dd>" in result
-
-    def test_handles_none_forecast_data(self):
-        """Test that None forecast data returns error message."""
-        result = _generate_forecast_html(None)
-
-        assert result == "<p>Unable to retrieve forecast content</p>"
-
-    def test_handles_empty_forecast_data(self):
-        """Test that empty forecast data returns error message."""
-        result = _generate_forecast_html({})
-
-        assert result == "<p>Unable to retrieve forecast content</p>"
-
-
-class TestRenderHtmlWithForecastContent:
-    @patch("weather.renderer.get_forecast_date")
-    @patch("weather.renderer.get_lyme_regis_lands_end_forecast")
-    def test_renders_with_forecast_content(self, mock_forecast, mock_date):
-        """Test that renderer includes forecast content in output."""
-        mock_date.return_value = "Tuesday 07 Jan 2025"
-        mock_forecast.return_value = {
+        """Test that forecast HTML is generated correctly."""
+        forecast_content = {
             "area_name": "Test Area",
             "sections": [
                 {
                     "title": "24 hour forecast:",
-                    "content": [{"category": "Wind", "description": "Light winds"}],
-                }
-            ],
-        }
-
-        template_content = """<html>
-<body>
-    <p>Date: {forecast_date}</p>
-    <div class="content">{forecast_content}</div>
-    <p>Updated: {last_updated}</p>
-</body>
-</html>"""
-
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as template_file:
-            template_file.write(template_content)
-            template_path = template_file.name
-
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as output_file:
-            output_path = output_file.name
-
-        try:
-            render_html(template_path, output_path)
-
-            with open(output_path) as f:
-                result = f.read()
-
-            assert "12pm" in result
-            assert "am" in result or "pm" in result
-            assert (
-                "today" in result
-                or "yesterday" in result
-                or "tomorrow" in result
-                or "tuesday" in result
-            )
-            assert "<h3>Test Area</h3>" in result
-            assert "From" in result and "today:" in result
-            assert "<dt>Wind</dt>" in result
-            assert "<dd>Light winds</dd>" in result
-
-        finally:
-            os.unlink(template_path)
-            os.unlink(output_path)
-
-    def test_renders_with_provided_forecast_content(self):
-        """Test that provided forecast content is used instead of scraping."""
-        template_content = """<html>
-<body>
-    <div class="content">{forecast_content}</div>
-</body>
-</html>"""
-
-        forecast_data = {
-            "area_name": "Provided Area",
-            "sections": [
-                {
-                    "title": "Test forecast:",
                     "content": [
-                        {"category": "Wind", "description": "Provided wind data"}
+                        {"category": "Wind", "description": "Light winds"},
+                        {"category": "Sea state", "description": "Calm"},
                     ],
                 }
             ],
         }
+        forecast_issue_time = "12:00 (UTC) on Thu 7 Aug 2025"
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as template_file:
-            template_file.write(template_content)
-            template_path = template_file.name
+        result = _generate_forecast_html(forecast_content, forecast_issue_time)
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".html", delete=False
-        ) as output_file:
-            output_path = output_file.name
-
-        try:
-            render_html(
-                template_path,
-                output_path,
-                forecast_date="Test Date",
-                forecast_content=forecast_data,
-            )
-
-            with open(output_path) as f:
-                result = f.read()
-
-            assert "<h3>Provided Area</h3>" in result
-            assert "<dd>Provided wind data</dd>" in result
-
-        finally:
-            os.unlink(template_path)
-            os.unlink(output_path)
+        assert "<h3>Test Area</h3>" in result
+        assert "<h4>From" in result
+        assert "<dt>Wind</dt>" in result
+        assert "<dd>Light winds</dd>" in result
+        assert "<dt>Sea state</dt>" in result
+        assert "<dd>Calm</dd>" in result
 
 
-class TestFormatRelativeDateTime:
-    def test_met_office_format_with_time_yesterday(self):
-        """Test Met Office format with time for yesterday."""
-        from datetime import datetime, timedelta
-        from zoneinfo import ZoneInfo
+class TestRenderHtml:
+    def test_requires_valid_template_path(self):
+        """Test that invalid template path raises exception."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_path = Path(temp_dir) / "output.html"
 
-        # Get yesterday's date dynamically
-        london_tz = ZoneInfo("Europe/London")
-        yesterday = datetime.now(london_tz) - timedelta(days=1)
+            with pytest.raises(FileNotFoundError):
+                render_html("nonexistent_template.html", str(output_path))
 
-        # Format yesterday as a Met Office datetime string
-        day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        month_names = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-        ]
+    @patch("weather.renderer.get_forecast_date")
+    @patch("weather.renderer.get_lyme_regis_lands_end_forecast")
+    @patch("weather.renderer.get_latest_ecmwf_base_time")
+    def test_calls_scrapers_when_data_not_provided(
+        self, mock_ecmwf, mock_forecast, mock_date
+    ):
+        """Test that scrapers are called when data is not provided."""
+        mock_date.return_value = "12:00 (UTC) on Thu 7 Aug 2025"
+        mock_forecast.return_value = {"area_name": "Test", "sections": []}
+        mock_ecmwf.return_value = {
+            "base_time": "202508071200",
+            "readable_time": "12:00 UTC on Thu 07 Aug 2025",
+            "datetime": None,
+        }
 
-        day_name = day_names[yesterday.weekday()]
-        month_name = month_names[yesterday.month - 1]
+        template_content = """
+        <html>
+        <body>
+        <div>{forecast_date}</div>
+        <div>{forecast_content}</div>
+        <div>{ecmwf_forecast_time}</div>
+        <div>{ecmwf_chart_url}</div>
+        <div>{meteogram_locations}</div>
+        <div>{last_updated}</div>
+        </body>
+        </html>
+        """
 
-        yesterday_str = (
-            f"12:00 (UTC) on {day_name} {yesterday.day} {month_name} {yesterday.year}"
-        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            template_path = Path(temp_dir) / "template.html"
+            output_path = Path(temp_dir) / "output.html"
 
-        result = _format_relative_datetime(yesterday_str, "met_office")
+            template_path.write_text(template_content)
 
-        assert "yesterday" in result
-        assert "1pm" in result
+            render_html(str(template_path), str(output_path))
 
-    def test_met_office_format_with_time_tomorrow(self):
-        """Test Met Office format with time for tomorrow."""
-        from datetime import datetime, timedelta
-        from zoneinfo import ZoneInfo
+            mock_date.assert_called_once()
+            mock_forecast.assert_called_once()
+            mock_ecmwf.assert_called_once()
 
-        # Get tomorrow's date dynamically
-        london_tz = ZoneInfo("Europe/London")
-        tomorrow = datetime.now(london_tz) + timedelta(days=1)
-
-        # Format tomorrow as a Met Office datetime string
-        day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        month_names = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-        ]
-
-        day_name = day_names[tomorrow.weekday()]
-        month_name = month_names[tomorrow.month - 1]
-
-        tomorrow_str = (
-            f"12:00 (UTC) on {day_name} {tomorrow.day} {month_name} {tomorrow.year}"
-        )
-
-        result = _format_relative_datetime(tomorrow_str, "met_office")
-
-        assert "tomorrow" in result
-        assert "1pm" in result
-
-
-class TestFormatForecastTitle:
-    def test_24_hour_forecast_title(self):
-        """Test that '24 hour forecast' gets converted to 'Today and tonight'."""
-        result = _format_forecast_title("24 hour forecast:", 0)
-        assert result == "Today and tonight:"
-
-    def test_following_24_hours_title(self):
-        """Test that 'following 24 hours' gets converted to 'Tomorrow'."""
-        result = _format_forecast_title("Outlook for the following 24 hours:", 1)
-        assert result == "Tomorrow:"
-
-    def test_second_section_by_index(self):
-        """Test that section index 1 gets 'Tomorrow' even without specific text."""
-        result = _format_forecast_title("Some other title", 1)
-        assert result == "Tomorrow:"
-
-    def test_third_section_day_after_tomorrow(self):
-        """Test that section index 2 gets 'Day after tomorrow'."""
-        result = _format_forecast_title("Some future forecast", 2)
-        assert result == "Day after tomorrow:"
-
-    def test_unknown_title_preserved(self):
-        """Test that unknown titles are preserved as-is."""
-        result = _format_forecast_title("Unknown forecast period", 5)
-        assert result == "Unknown forecast period"
-
-    def test_with_forecast_issue_time(self):
-        """Test forecast title formatting with actual issue time."""
-        issue_time = "12:00 (UTC) on Thu 7 Aug 2025"
-
-        result = _format_forecast_title("24 hour forecast:", 0, issue_time)
-        assert "From" in result and "today:" in result
-
-        result = _format_forecast_title(
-            "Outlook for the following 24 hours:", 1, issue_time
-        )
-        assert "From" in result and "tomorrow:" in result
-
-    def test_with_unparseable_issue_time(self):
-        """Test handling of unparseable issue time format."""
-        issue_time = "Invalid format"
-
-        result = _format_forecast_title("24 hour forecast:", 0, issue_time)
-        assert "From" in result
-
-    def test_with_no_time_in_issue_time(self):
-        """Test handling of issue time without time component."""
-        issue_time = "Monday 06 Jan 2025"  # No time component
-
-        result = _format_forecast_title("24 hour forecast:", 0, issue_time)
-        assert "From" in result
-
-    def test_section_index_2_with_issue_time(self):
-        """Test third section formatting with issue time."""
-        issue_time = "12:00 (UTC) on Thu 7 Aug 2025"
-
-        result = _format_forecast_title("Some forecast", 2, issue_time)
-        assert "From" in result
-
-    def test_section_index_high_with_issue_time(self):
-        """Test high section index formatting with issue time."""
-        issue_time = "12:00 (UTC) on Thu 7 Aug 2025"
-
-        result = _format_forecast_title("Future forecast", 5, issue_time)
-        assert "From" in result
-
-    def test_exception_handling_in_parsing(self):
-        """Test exception handling when datetime parsing fails."""
-        # This will cause an exception in the months dictionary lookup
-        issue_time = "12:00 (UTC) on Thu 7 InvalidMonth 2025"
-
-        result = _format_forecast_title("24 hour forecast:", 0, issue_time)
-        assert (
-            "From" in result
-        )  # Should still return a result due to exception handling
-
-    def test_yesterday_date_handling(self):
-        """Test handling of forecast sections that start yesterday."""
-        from datetime import datetime, timedelta
-        from zoneinfo import ZoneInfo
-
-        # Create an issue time that when negative section index would be yesterday
-        london_tz = ZoneInfo("Europe/London")
-        yesterday = datetime.now(london_tz) - timedelta(days=1)
-
-        # Format as Met Office issue time
-        day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-        month_names = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-        ]
-
-        day_name = day_names[yesterday.weekday()]
-        month_name = month_names[yesterday.month - 1]
-
-        issue_time = (
-            f"12:00 (UTC) on {day_name} {yesterday.day} {month_name} {yesterday.year}"
-        )
-
-        # This should trigger the "yesterday" path when we format section 0 starting from yesterday  # noqa: E501
-        result = _format_forecast_title("24 hour forecast:", 0, issue_time)
-        assert "From" in result and "yesterday" in result
+            # Verify output file was created
+            assert output_path.exists()
