@@ -23,7 +23,7 @@ and so that I can see when updates are available.
 
 ### Stack
 
-* Deployed on Digital Ocean
+* Deployed using GH workflows and pages
 * Python rendering static HTML
 
 ### Operations

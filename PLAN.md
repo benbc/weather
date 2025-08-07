@@ -3,8 +3,7 @@
 ## Tasks
 
 - [x] Describe initial plan
-- [x] Write simple code to scrape one piece of information:
-      latest forecast date from https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast
+- [x] Write simple code to scrape one piece of information
 - [x] Render one piece of information in a simple web page
 - [x] Locate forecast data using HTML structure rather than a regex
 - [ ] Deploy the simple application
@@ -12,15 +11,21 @@
 ## Current task
 
 ### Goal
-Locate forecast data using HTML structure rather than a regex
+Deploy the application using GitHub Pages with automated updates
 
 ### Approach
-1. Analyze the HTML structure of the Met Office page to identify specific elements containing forecast data
-2. Update the scraper to use Beautiful Soup's HTML parsing to target specific elements
-3. Make the scraper more robust by using CSS selectors or element attributes
-4. Test the improved scraper
+1. Create GitHub Actions workflow to run scraper on schedule (hourly)
+2. Use just commands within the workflow for task execution
+3. Configure workflow to generate HTML and commit to repository
+4. Set up GitHub Pages to serve from docs/ directory
+5. Test the complete deployment pipeline
+6. Verify caching behavior and update frequency
 
 ### Checklist
-- [x] Analyze the HTML structure of the Met Office page
-- [x] Update scraper to use HTML elements instead of regex
-- [x] Test the improved scraper
+- [ ] Create GitHub Actions workflow file
+- [ ] Configure workflow to run scraper hourly using just commands
+- [ ] Set up workflow to generate HTML and commit changes
+- [ ] Configure GitHub Pages deployment
+- [ ] Update output directory structure for GitHub Pages
+- [ ] Test the complete pipeline
+- [ ] Verify automated updates work correctly

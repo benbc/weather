@@ -1,0 +1,48 @@
+name: Update Weather Forecast
+
+on:
+  schedule:
+    # Run every hour at minute 0
+    - cron: '0 * * * *'
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  update-forecast:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+        
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      
+    - name: Install just
+      uses: extractions/setup-just@v2
+      
+    - name: Install dependencies
+      run: uv sync
+      
+    - name: Generate weather forecast HTML
+      run: just render
+      
+    - name: Configure git
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+    - name: Commit and push if changed
+      run: |
+        git add docs/
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Update weather forecast $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
+        fi
