@@ -18,6 +18,10 @@ test:
 coverage:
     uv run pytest --cov-report=html
 
+# Run tests with detailed coverage showing missing lines
+coverage-check:
+    uv run pytest --cov=src/weather --cov-report=term-missing --cov-fail-under=100
+
 # Check code formatting and linting
 lint:
     uv run ruff check .

@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 import requests
 import responses
@@ -345,7 +347,7 @@ class TestGetLatestEcmwfBaseTime:
         assert 2020 <= year <= 2030  # Reasonable year range
         assert 1 <= month <= 12
         assert 1 <= day <= 31
-        assert hour in [0, 6, 12, 18]  # ECMWF forecast hours
+        assert hour in [0, 12]  # ECMWF forecast hours
         assert minute == 0  # Always 00 minutes
 
     def test_returns_consistent_format_across_calls(self):
@@ -380,6 +382,75 @@ class TestGetLatestEcmwfBaseTime:
         expected_base_time = dt.strftime("%Y%m%d%H%M")
 
         assert result["base_time"] == expected_base_time
+
+    @patch("weather.scraper.requests.get")
+    def test_extracts_base_time_from_redirect(self, mock_get):
+        """Test that base_time is extracted from ECMWF redirect URL."""
+        # Mock the response to simulate ECMWF redirect
+        mock_response = mock_get.return_value
+        mock_response.url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe&base_time=202508071200"
+
+        result = get_latest_ecmwf_base_time()
+
+        assert isinstance(result, dict)
+        assert result["base_time"] == "202508071200"
+        assert "12:00 UTC" in result["readable_time"]
+        assert "07 Aug 2025" in result["readable_time"]
+
+    @patch("weather.scraper.requests.get")
+    def test_handles_redirect_without_base_time(self, mock_get):
+        """Test fallback when redirect URL doesn't contain base_time."""
+        # Mock response with URL that doesn't contain base_time parameter
+        mock_response = mock_get.return_value
+        mock_response.url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe"
+
+        result = get_latest_ecmwf_base_time()
+
+        assert isinstance(result, dict)
+        assert "base_time" in result
+        assert "readable_time" in result
+        assert "datetime" in result
+        # Should use fallback logic
+        assert result["base_time"].endswith("1200")
+
+    @patch("weather.scraper.requests.get")
+    def test_handles_request_exceptions(self, mock_get):
+        """Test that request exceptions are handled gracefully."""
+        # Mock requests.get to raise an exception
+        mock_get.side_effect = requests.RequestException("Connection failed")
+
+        # Should still return a result using fallback logic
+        result = get_latest_ecmwf_base_time()
+
+        assert isinstance(result, dict)
+        assert "base_time" in result
+        assert "readable_time" in result
+        assert "datetime" in result
+        # Should use fallback logic
+        assert result["base_time"].endswith("1200")
+
+    @patch("weather.scraper.requests.get")
+    @patch("weather.scraper.datetime")
+    def test_fallback_with_time_before_noon(self, mock_datetime, mock_get):
+        """Test fallback logic when current time is before noon UTC."""
+        from datetime import datetime
+
+        # Mock requests.get to raise exception (force fallback)
+        mock_get.side_effect = requests.RequestException("Connection failed")
+
+        # Mock current time to be before noon UTC (e.g., 9am UTC)
+        mock_now = datetime(2025, 8, 7, 9, 0, 0)  # 9am UTC
+        mock_datetime.now.return_value = mock_now
+        mock_datetime.side_effect = lambda *args, **kwargs: datetime(*args, **kwargs)
+
+        # Should use yesterday's 12:00 UTC since today's noon hasn't happened yet
+        result = get_latest_ecmwf_base_time()
+
+        assert isinstance(result, dict)
+        assert result["base_time"].endswith("1200")
+        # Should be yesterday's date (day before mock_now)
+        expected_date = "20250806"  # Day before 2025-08-07
+        assert result["base_time"].startswith(expected_date)
 
 
 class TestGetSailingLocations:

@@ -83,43 +83,62 @@ def get_lyme_regis_lands_end_forecast(url: str) -> dict | None:
 
 def get_latest_ecmwf_base_time() -> dict:
     """
-    Calculate the most recent likely available ECMWF forecast base time.
+    Find the most recent available ECMWF forecast base time.
 
-    ECMWF runs forecasts at 00, 06, 12, and 18 UTC daily, with dissemination
-    occurring approximately 6-8 hours after each base time.
+    Makes a request to ECMWF without a base_time parameter, which redirects
+    to the latest available forecast. We extract the base time from the redirect.
 
     Returns:
         Dictionary containing base_time string (YYYYMMDDHHMM format) and
         human-readable description
     """
+    base_url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe"
+
+    try:
+        # Request without base_time - ECMWF will redirect to latest available
+        response = requests.get(base_url, timeout=10, allow_redirects=True)
+
+        # Extract base_time from the final URL after redirect
+        final_url = response.url
+        if "base_time=" in final_url:
+            # Extract base_time parameter from URL
+            import re
+
+            match = re.search(r"base_time=(\d{12})", final_url)
+            if match:
+                base_time_str = match.group(1)
+
+                # Parse the base time to create readable format
+                year = int(base_time_str[:4])
+                month = int(base_time_str[4:6])
+                day = int(base_time_str[6:8])
+                hour = int(base_time_str[8:10])
+                minute = int(base_time_str[10:12])
+
+                forecast_dt = datetime(year, month, day, hour, minute)
+                readable_time = forecast_dt.strftime("%H:%M UTC on %a %d %b %Y")
+
+                return {
+                    "base_time": base_time_str,
+                    "readable_time": readable_time,
+                    "datetime": forecast_dt,
+                }
+    except requests.RequestException:
+        pass  # Fall through to fallback
+
+    # Fallback: if request fails, use most recent 12:00 UTC
     now = datetime.now(timezone.utc).replace(tzinfo=None)  # noqa: UP017
+    fallback_time = now.replace(hour=12, minute=0, second=0, microsecond=0)
+    if fallback_time > now:
+        fallback_time -= timedelta(days=1)
 
-    # Define the 4 daily forecast times
-    forecast_hours = [0, 6, 12, 18]
-
-    # Find the most recent forecast time that is likely available
-    # Account for ~6-8 hour dissemination delay
-    available_time = now - timedelta(hours=7)  # Conservative 7-hour delay
-
-    # Find the most recent forecast hour before the available_time
-    for hour in reversed(forecast_hours):
-        forecast_time = available_time.replace(
-            hour=hour, minute=0, second=0, microsecond=0
-        )
-        if forecast_time <= available_time:
-            base_time = forecast_time
-            break
-
-    # Format as YYYYMMDDHHMM
-    base_time_str = base_time.strftime("%Y%m%d%H%M")
-
-    # Create human-readable description
-    readable_time = base_time.strftime("%H:%M UTC on %a %d %b %Y")
+    base_time_str = fallback_time.strftime("%Y%m%d%H%M")
+    readable_time = fallback_time.strftime("%H:%M UTC on %a %d %b %Y")
 
     return {
         "base_time": base_time_str,
         "readable_time": readable_time,
-        "datetime": base_time,
+        "datetime": fallback_time,
     }
 
 
