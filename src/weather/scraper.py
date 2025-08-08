@@ -172,14 +172,14 @@ def get_sailing_locations() -> list[dict]:
         {
             "name": "The Lizard",
             "description": "Lizard Peninsula area",
-            "lat": 49.97,
-            "lon": -4.95,
+            "lat": 49.95,
+            "lon": -5.02,
         },
         {
             "name": "River Dart",
-            "description": "1nm off River Dart entrance",
-            "lat": 50.32,
-            "lon": -3.57,
+            "description": "1M off River Dart entrance",
+            "lat": 50.30,
+            "lon": -3.64,
         },
     ]
 

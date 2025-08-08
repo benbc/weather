@@ -7,6 +7,9 @@ It's customised for my use (my preferences, sailing area etc).
 It exists to save me time, so I don't have to check multiple sources of information
 and so that I can see when updates are available.
 
+Since this is a maritime application, all distances should be given in nautical miles
+(abbreviation M).
+
 ## Development process
 
 * Work in small increments, as specified by the person instructing you

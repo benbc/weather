@@ -434,24 +434,24 @@ class TestGetSailingLocations:
 
         # Check specific location data
         lizard = next(loc for loc in result if loc["name"] == "The Lizard")
-        assert lizard["lat"] == 49.97
-        assert lizard["lon"] == -4.95
+        assert lizard["lat"] == 49.95
+        assert lizard["lon"] == -5.02
 
         dart = next(loc for loc in result if loc["name"] == "River Dart")
-        assert dart["lat"] == 50.32
-        assert dart["lon"] == -3.57
+        assert dart["lat"] == 50.30
+        assert dart["lon"] == -3.64
 
 
 class TestGenerateMeteogramUrl:
     def test_generates_correct_url_format(self):
         """Test that meteogram URL is generated with correct format."""
-        lat, lon, base_time = 49.97, -4.95, "202508070000"
+        lat, lon, base_time = 49.95, -5.02, "202508070000"
 
         result = generate_meteogram_url(lat, lon, base_time)
 
         expected_url = (
             "https://charts.ecmwf.int/products/opencharts_meteogram?"
-            "base_time=202508070000&epsgram=classical_15d&lat=49.97&lon=-4.95"
+            "base_time=202508070000&epsgram=classical_15d&lat=49.95&lon=-5.02"
         )
         assert result == expected_url
 
@@ -475,7 +475,7 @@ class TestGenerateMeteogramUrl:
 
     def test_includes_all_required_parameters(self):
         """Test that all required URL parameters are included."""
-        result = generate_meteogram_url(49.97, -4.95, "202508070000")
+        result = generate_meteogram_url(49.95, -5.02, "202508070000")
 
         assert "base_time=" in result
         assert "epsgram=classical_15d" in result
@@ -490,5 +490,5 @@ class TestGenerateMeteogramUrl:
         base_times = ["202508070000", "202508070600", "202508071200", "202508071800"]
 
         for base_time in base_times:
-            result = generate_meteogram_url(49.97, -4.95, base_time)
+            result = generate_meteogram_url(49.95, -5.02, base_time)
             assert f"base_time={base_time}" in result
