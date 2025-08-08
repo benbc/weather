@@ -324,6 +324,12 @@ def _generate_meteogram_locations_html(base_time: str) -> str:
             location["lat"], location["lon"], base_time
         )
 
+        # Generate Google Maps URL with satellite view and pin
+        maps_url = (
+            f"https://www.google.com/maps/place/{location['lat']},{location['lon']}"
+            f"/@{location['lat']},{location['lon']},10z/data=!3m1!1e3"
+        )
+
         html_parts.append('<div class="location-item">')
         html_parts.append(f'<span class="location-name">{location["name"]}</span>')
         html_parts.append(
@@ -333,6 +339,10 @@ def _generate_meteogram_locations_html(base_time: str) -> str:
         html_parts.append(
             f'<a href="{meteogram_url}" class="meteogram-link" '
             f'target="_blank">View Meteogram →</a>'
+        )
+        html_parts.append(" | ")
+        html_parts.append(
+            f'<a href="{maps_url}" class="maps-link" target="_blank">View Map →</a>'
         )
         html_parts.append("</div>")
 

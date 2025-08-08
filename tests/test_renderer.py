@@ -8,6 +8,7 @@ from weather.renderer import (
     _format_forecast_title,
     _format_relative_datetime,
     _generate_forecast_html,
+    _generate_meteogram_locations_html,
     render_html,
 )
 
@@ -281,3 +282,90 @@ class TestRenderHtml:
 
             # Verify output file was created
             assert output_path.exists()
+
+
+class TestGenerateMeteogramLocationsHtml:
+    @patch("weather.renderer.get_sailing_locations")
+    def test_includes_google_maps_links(self, mock_get_locations):
+        """Test that Google Maps links with satellite view are included."""
+        mock_get_locations.return_value = [
+            {
+                "name": "Test Location",
+                "description": "Test description",
+                "lat": 50.0,
+                "lon": -4.0,
+            }
+        ]
+
+        base_time = "202508071200"
+        result = _generate_meteogram_locations_html(base_time)
+
+        # Check that the location name and description are included
+        assert "Test Location" in result
+        assert "Test description" in result
+
+        # Check that meteogram link is included
+        assert "View Meteogram →" in result
+        assert "charts.ecmwf.int" in result
+
+        # Check that Google Maps link is included with satellite view
+        assert "View Map →" in result
+        assert (
+            "www.google.com/maps/place/50.0,-4.0/@50.0,-4.0,10z/data=!3m1!1e3" in result
+        )
+        assert 'target="_blank"' in result
+
+    @patch("weather.renderer.get_sailing_locations")
+    def test_multiple_locations(self, mock_get_locations):
+        """Test that multiple locations are rendered correctly."""
+        mock_get_locations.return_value = [
+            {
+                "name": "Location 1",
+                "description": "Description 1",
+                "lat": 50.0,
+                "lon": -4.0,
+            },
+            {
+                "name": "Location 2",
+                "description": "Description 2",
+                "lat": 51.0,
+                "lon": -3.0,
+            },
+        ]
+
+        base_time = "202508071200"
+        result = _generate_meteogram_locations_html(base_time)
+
+        # Check that both locations are included
+        assert "Location 1" in result
+        assert "Location 2" in result
+        assert "Description 1" in result
+        assert "Description 2" in result
+
+        # Check that both Google Maps links are included
+        assert (
+            "www.google.com/maps/place/50.0,-4.0/@50.0,-4.0,10z/data=!3m1!1e3" in result
+        )
+        assert (
+            "www.google.com/maps/place/51.0,-3.0/@51.0,-3.0,10z/data=!3m1!1e3" in result
+        )
+
+    @patch("weather.renderer.get_sailing_locations")
+    def test_link_separator(self, mock_get_locations):
+        """Test that links are separated by a pipe separator."""
+        mock_get_locations.return_value = [
+            {
+                "name": "Test Location",
+                "description": "Test description",
+                "lat": 50.0,
+                "lon": -4.0,
+            }
+        ]
+
+        base_time = "202508071200"
+        result = _generate_meteogram_locations_html(base_time)
+
+        # Check that the separator is included between links
+        assert "View Meteogram →" in result
+        assert " | " in result
+        assert "View Map →" in result

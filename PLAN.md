@@ -22,5 +22,6 @@
 - [x] Replace ECMWF page fetching with headless browser
 - [x] Workflow is failing on GitHub
 - [x] Run the workflow every ten minutes
+- [x] Add links to locations in Google Maps
 
 ## Current task
