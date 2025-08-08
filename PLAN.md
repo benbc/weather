@@ -25,6 +25,7 @@
 - [x] Add links to locations in Google Maps
 - [x] Open all links in the same browser tab, not a new one
 - [x] Correct for limited location resolution in ECMWF forecasts
+- [x] Add a Just command for deploying: pull, push, run the workflow, check it's working
 
 ## Current task
 

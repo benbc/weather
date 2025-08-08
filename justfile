@@ -63,3 +63,46 @@ optimize-lizard:
 # Optimize River Dart location
 optimize-dart:  
     just optimize-location-test "River Dart (1M off entrance)" 50.32 -3.57
+
+# Deploy: pull, push, run workflow, and check status
+deploy:
+    @echo "🚀 Starting deployment process..."
+    @echo "📥 Pulling latest changes..."
+    git pull --rebase
+    @echo "📤 Pushing local changes..."
+    git push
+    @echo "⚡ Triggering workflow..."
+    gh workflow run "Update Weather Forecast"
+    @echo "⏳ Waiting for workflow to start..."
+    sleep 5
+    @echo "📊 Checking workflow status..."
+    gh run list --workflow="Update Weather Forecast" --limit=1
+    @echo "✅ Deployment triggered! Use 'just check-deployment' to monitor progress."
+
+# Test deployment commands without actually deploying
+deploy-dry-run:
+    @echo "🧪 Testing deployment commands (dry run)..."
+    @echo "📥 Would pull latest changes with: git pull --rebase"
+    @echo "📤 Would push local changes with: git push" 
+    @echo "⚡ Would trigger workflow with: gh workflow run 'Update Weather Forecast'"
+    @echo "📊 Current workflow status:"
+    gh run list --workflow="Update Weather Forecast" --limit=1
+    @echo "✅ Dry run complete. Use 'just deploy' to actually deploy."
+
+# Check the status of the latest deployment
+check-deployment:
+    @echo "📊 Latest deployment status:"
+    gh run list --workflow="Update Weather Forecast" --limit=3
+    @echo ""
+    @echo "🔍 Detailed view of latest run:"
+    gh run view $(gh run list --workflow="Update Weather Forecast" --limit=1 --json databaseId --jq '.[0].databaseId')
+
+# Watch deployment progress in real-time  
+watch-deployment:
+    @echo "👀 Watching deployment progress (press Ctrl+C to stop)..."
+    watch -n 10 'gh run list --workflow="Update Weather Forecast" --limit=1'
+
+# View logs of the latest deployment
+deployment-logs:
+    @echo "📜 Viewing logs from latest deployment..."
+    gh run view $(gh run list --workflow="Update Weather Forecast" --limit=1 --json databaseId --jq '.[0].databaseId') --log
