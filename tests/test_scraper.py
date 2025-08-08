@@ -414,13 +414,11 @@ class TestGetSailingLocations:
         location = result[0]
         assert isinstance(location, dict)
         assert "name" in location
-        assert "description" in location
         assert "lat" in location
         assert "lon" in location
 
         # Check data types
         assert isinstance(location["name"], str)
-        assert isinstance(location["description"], str)
         assert isinstance(location["lat"], int | float)
         assert isinstance(location["lon"], int | float)
 
@@ -429,17 +427,17 @@ class TestGetSailingLocations:
         result = get_sailing_locations()
 
         location_names = [loc["name"] for loc in result]
-        assert "The Lizard" in location_names
-        assert "River Dart" in location_names
+        assert "7M off Lizard Point" in location_names
+        assert "7M off Dartmouth" in location_names
 
         # Check specific location data
-        lizard = next(loc for loc in result if loc["name"] == "The Lizard")
+        lizard = next(loc for loc in result if loc["name"] == "7M off Lizard Point")
         assert lizard["lat"] == 49.95
         assert lizard["lon"] == -5.02
 
-        dart = next(loc for loc in result if loc["name"] == "River Dart")
-        assert dart["lat"] == 50.30
-        assert dart["lon"] == -3.64
+        dart = next(loc for loc in result if loc["name"] == "7M off Dartmouth")
+        assert dart["lat"] == 50.23
+        assert dart["lon"] == -3.47
 
 
 class TestGenerateMeteogramUrl:

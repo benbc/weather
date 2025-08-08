@@ -26,6 +26,7 @@ omit = [
     "*/__pycache__/*",
     "*/location_tools.py",
     "*/location_optimizer.py",
+    "*/location_finder.py",
 ]
 
 [tool.coverage.report]

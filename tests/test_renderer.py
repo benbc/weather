@@ -291,7 +291,6 @@ class TestGenerateMeteogramLocationsHtml:
         mock_get_locations.return_value = [
             {
                 "name": "Test Location",
-                "description": "Test description",
                 "lat": 50.0,
                 "lon": -4.0,
             }
@@ -300,9 +299,8 @@ class TestGenerateMeteogramLocationsHtml:
         base_time = "202508071200"
         result = _generate_meteogram_locations_html(base_time)
 
-        # Check that the location name and description are included
+        # Check that the location name is included
         assert "Test Location" in result
-        assert "Test description" in result
 
         # Check that meteogram link is included
         assert "View Meteogram →" in result
@@ -320,13 +318,11 @@ class TestGenerateMeteogramLocationsHtml:
         mock_get_locations.return_value = [
             {
                 "name": "Location 1",
-                "description": "Description 1",
                 "lat": 50.0,
                 "lon": -4.0,
             },
             {
                 "name": "Location 2",
-                "description": "Description 2",
                 "lat": 51.0,
                 "lon": -3.0,
             },
@@ -338,8 +334,6 @@ class TestGenerateMeteogramLocationsHtml:
         # Check that both locations are included
         assert "Location 1" in result
         assert "Location 2" in result
-        assert "Description 1" in result
-        assert "Description 2" in result
 
         # Check that both Google Maps links are included
         assert (
@@ -355,7 +349,6 @@ class TestGenerateMeteogramLocationsHtml:
         mock_get_locations.return_value = [
             {
                 "name": "Test Location",
-                "description": "Test description",
                 "lat": 50.0,
                 "lon": -4.0,
             }

@@ -332,9 +332,6 @@ def _generate_meteogram_locations_html(base_time: str) -> str:
 
         html_parts.append('<div class="location-item">')
         html_parts.append(f'<span class="location-name">{location["name"]}</span>')
-        html_parts.append(
-            f'<span class="location-description">({location["description"]})</span>'
-        )
         html_parts.append("<br>")
         html_parts.append(
             f'<a href="{meteogram_url}" class="meteogram-link">View Meteogram →</a>'

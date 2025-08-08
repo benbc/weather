@@ -106,3 +106,28 @@ watch-deployment:
 deployment-logs:
     @echo "📜 Viewing logs from latest deployment..."
     gh run view $(gh run list --workflow="Update Weather Forecast" --limit=1 --json databaseId --jq '.[0].databaseId') --log
+
+# Find sailing locations from human-friendly descriptions
+find-location description:
+    @echo "🔍 Searching for sea points matching: {{description}}"
+    uv run python -c "from src.weather.location_finder import find_location_from_description; results = find_location_from_description('{{description}}'); print(f'Found {len(results)} sea points'); [print(f'  {i+1}. {r.suggested_description} - ECMWF: {r.actual_ecmwf_coords[0]:.3f}°N, {abs(r.actual_ecmwf_coords[1]):.3f}°W') for i, r in enumerate(results[:5])]"
+
+# Test location description parsing
+parse-location description:
+    @echo "🔤 Parsing location description: {{description}}"
+    uv run python -c "from src.weather.location_finder import parse_location_description; result = parse_location_description('{{description}}'); print('Parsed result:', result)"
+
+# Check current locations for sea vs land points  
+check-location-types:
+    @echo "🌊 Checking current location types (sea vs land)..."
+    uv run python -c "from src.weather.location_finder import is_sea_point_from_meteogram; from src.weather.scraper import get_sailing_locations; locations = get_sailing_locations(); print('Current locations:'); [print(f'  {loc[\"name\"]}: {loc[\"description\"]}') for loc in locations]; print('\\nSea/Land status will be shown when meteograms are fetched.')"
+
+# Test small search around a landmark (limited for testing)
+test-search landmark distance:
+    @echo "🧪 Testing location search: {{distance}}M around {{landmark}}"
+    uv run python -c "from src.weather.location_finder import search_for_sea_point; results = search_for_sea_point('{{landmark}}', {{distance}}, max_search_radius_nm=1.0, grid_step_km=5.0); print(f'\\nFound {len(results)} sea points'); [print(f'{i+1}. {r.suggested_description} - ECMWF: {r.actual_ecmwf_coords[0]:.3f}°N, {abs(r.actual_ecmwf_coords[1]):.3f}°W - {r.distance_from_landmark_nm:.1f}M') for i, r in enumerate(results[:3])]"
+
+# Test the description generator with rounding to nearest nautical mile
+test-descriptions:
+    @echo "🔤 Testing description generator with various distances..."
+    uv run python -c "from src.weather.location_finder import generate_rounded_description; test_distances = [1.2, 1.7, 2.4, 3.8, 5.1]; [print(f'{dist}M → {generate_rounded_description(\"dartmouth\", dist)}') for dist in test_distances]"

@@ -29,7 +29,6 @@ class LocationResult(NamedTuple):
     """Result of location verification."""
 
     name: str
-    description: str
     requested_lat: float
     requested_lon: float
     actual_lat: float | None
@@ -125,8 +124,8 @@ def extract_coordinates_from_meteogram(
 
         # Legacy lookup by name for backward compatibility
         known_coordinates_by_name = {
-            "The Lizard": (49.95, -5.02),
-            "River Dart": (50.3, -3.64),
+            "7M off Lizard Point": (49.95, -5.02),
+            "7M off Dartmouth": (50.23, -3.47),
         }
 
         # Try lookup by image hash first (most reliable)
@@ -214,7 +213,7 @@ def verify_current_locations() -> list[LocationResult]:
     print()
 
     for location in locations:
-        print(f"Checking {location['name']} ({location['description']})...")
+        print(f"Checking {location['name']}...")
 
         # Generate meteogram URL
         meteogram_url = generate_meteogram_url(
@@ -249,7 +248,6 @@ def verify_current_locations() -> list[LocationResult]:
 
         result = LocationResult(
             name=location["name"],
-            description=location["description"],
             requested_lat=location["lat"],
             requested_lon=location["lon"],
             actual_lat=actual_lat,
@@ -270,7 +268,6 @@ def print_verification_summary(results: list[LocationResult]) -> None:
 
     for result in results:
         print(f"📍 {result.name}")
-        print(f"   Description: {result.description}")
         print(
             f"   Requested:   {result.requested_lat:.2f}°N, "
             f"{abs(result.requested_lon):.2f}°W"
