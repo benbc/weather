@@ -170,14 +170,24 @@ def get_sailing_locations() -> list[dict]:
     """
     return [
         {
-            "name": "7M off Lizard Point",
-            "lat": 49.95,
-            "lon": -5.02,
-        },
-        {
-            "name": "7M off Dartmouth",
+            "name": "8M off Dartmouth",
             "lat": 50.23,
             "lon": -3.47,
+        },
+        {
+            "name": "8M off Plymouth",
+            "lat": 50.23,
+            "lon": -4.11,
+        },
+        {
+            "name": "4M off Dodman Point",
+            "lat": 50.16,
+            "lon": -4.73,
+        },
+        {
+            "name": "1M off Lizard Point",
+            "lat": 49.92,
+            "lon": -5.20,
         },
     ]
 

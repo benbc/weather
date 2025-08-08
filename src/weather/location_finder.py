@@ -57,6 +57,8 @@ LANDMARKS = {
     "lizard point": Landmark("Lizard Point", 49.9581, -5.2032),
     "the lizard": Landmark("Lizard Point", 49.9581, -5.2032),
     "falmouth": Landmark("Falmouth", 50.1532, -5.0707),
+    "dodman": Landmark("Dodman Point", 50.2082, -4.7932),
+    "dodman point": Landmark("Dodman Point", 50.2082, -4.7932),
 }
 
 
@@ -123,6 +125,11 @@ def is_sea_point_from_meteogram(image_bytes: bytes) -> bool | None:
         "3ba751ba": False,  # Land point (50.3°N 3.64°W) 22 m
         "4a673d58": False,  # Land point (50.3°N 3.64°W) 76 m
         "f9213154": True,  # Sea point (50.23°N 3.47°W) 0 m
+        # Points discovered during Plymouth, Dodman, and Lizard searches
+        "27a67ed0": True,  # Sea point (50.23°N 4.11°W) 0 m - Plymouth area
+        "188652e6": True,  # Sea point (50.16°N 4.73°W) 0 m - Dodman area
+        "07dd3724": True,  # Sea point (49.92°N 5.20°W) 0 m - Lizard area
+        "87b31f9a": False,  # Land point (50.02°N 5.18°W) 0 m - Lizard coast
     }
 
     if img_hash in known_point_types:

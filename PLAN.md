@@ -26,28 +26,9 @@
 - [x] Open all links in the same browser tab, not a new one
 - [x] Correct for limited location resolution in ECMWF forecasts
 - [x] Add a Just command for deploying: pull, push, run the workflow, check it's working
-- [ ] Specify locations based on human-friendly description
+- [x] Specify locations based on human-friendly description
+- [x] Change the positions
 
 ## Current task
 
 ### Goal
-Specify locations based on human-friendly description
-
-The descriptions currently don't match the resulting positions.
-We should take a description as input, find a useable nearby-position,
-_and then update the description_.
-So if we are given "1M off Dartmouth", but find that the only usable position is 3M off
-then the final description should be "3M off Dartmouth".
-
-NB that we are only interested in points that are actually the sea.
-The current Dartmouth point is actually on the land.
-The forecasts helpfully indicate if it's a land or sea point.
-
-### Approach
-* Check current locations to identify land vs sea points from meteogram images
-* Create a location search tool that takes human descriptions (e.g., "2M off Plymouth")
-* Search for nearby ECMWF sea points within reasonable distance
-* Calculate actual distances from landmarks and generate accurate descriptions
-* Round descriptions to nearest 1M for human readability
-* Build Just commands for easy location management
-* Update current locations to use proper sea points with accurate descriptions

@@ -124,8 +124,10 @@ def extract_coordinates_from_meteogram(
 
         # Legacy lookup by name for backward compatibility
         known_coordinates_by_name = {
-            "7M off Lizard Point": (49.95, -5.02),
-            "7M off Dartmouth": (50.23, -3.47),
+            "8M off Dartmouth": (50.23, -3.47),
+            "8M off Plymouth": (50.23, -4.11),
+            "4M off Dodman Point": (50.16, -4.73),
+            "1M off Lizard Point": (49.92, -5.20),
         }
 
         # Try lookup by image hash first (most reliable)

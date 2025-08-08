@@ -427,17 +427,27 @@ class TestGetSailingLocations:
         result = get_sailing_locations()
 
         location_names = [loc["name"] for loc in result]
-        assert "7M off Lizard Point" in location_names
-        assert "7M off Dartmouth" in location_names
+        assert "8M off Dartmouth" in location_names
+        assert "8M off Plymouth" in location_names
+        assert "4M off Dodman Point" in location_names
+        assert "1M off Lizard Point" in location_names
 
         # Check specific location data
-        lizard = next(loc for loc in result if loc["name"] == "7M off Lizard Point")
-        assert lizard["lat"] == 49.95
-        assert lizard["lon"] == -5.02
+        dartmouth = next(loc for loc in result if loc["name"] == "8M off Dartmouth")
+        assert dartmouth["lat"] == 50.23
+        assert dartmouth["lon"] == -3.47
 
-        dart = next(loc for loc in result if loc["name"] == "7M off Dartmouth")
-        assert dart["lat"] == 50.23
-        assert dart["lon"] == -3.47
+        plymouth = next(loc for loc in result if loc["name"] == "8M off Plymouth")
+        assert plymouth["lat"] == 50.23
+        assert plymouth["lon"] == -4.11
+
+        dodman = next(loc for loc in result if loc["name"] == "4M off Dodman Point")
+        assert dodman["lat"] == 50.16
+        assert dodman["lon"] == -4.73
+
+        lizard = next(loc for loc in result if loc["name"] == "1M off Lizard Point")
+        assert lizard["lat"] == 49.92
+        assert lizard["lon"] == -5.20
 
 
 class TestGenerateMeteogramUrl:
