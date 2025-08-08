@@ -20,5 +20,7 @@
 - [x] Change "24 hour forecast" and "following 24 hours" in the inshore waters forecast to use the same format as the rest of the page
 - [x] Remove all fallback logic
 - [x] Replace ECMWF page fetching with headless browser
+- [x] Workflow is failing on GitHub
+- [x] Run the workflow every ten minutes
 
 ## Current task
