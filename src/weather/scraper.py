@@ -97,8 +97,9 @@ def get_latest_ecmwf_base_time() -> dict:
     """
     Find the most recent available ECMWF forecast base time.
 
-    Makes a request to ECMWF without a base_time parameter, which redirects
-    to the latest available forecast. We extract the base time from the redirect.
+    Uses a headless browser to navigate to the ECMWF page without a base_time
+    parameter, which redirects to the latest available forecast. We extract
+    the base time from the final URL after JavaScript execution and redirect.
 
     Returns:
         Dictionary containing base_time string (YYYYMMDDHHMM format) and
@@ -107,21 +108,35 @@ def get_latest_ecmwf_base_time() -> dict:
     Raises:
         Exception: If ECMWF request fails or base_time cannot be extracted
     """
+    import re
+
+    from playwright.sync_api import sync_playwright
+
     base_url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe"
 
-    # Request without base_time - ECMWF will redirect to latest available
-    response = requests.get(base_url, timeout=10, allow_redirects=True)
-    response.raise_for_status()
+    with sync_playwright() as p:
+        # Launch headless browser
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
 
-    # Extract base_time from the final URL after redirect
-    final_url = response.url
+        try:
+            # Navigate to ECMWF page - this will execute JS and handle redirects
+            page.goto(base_url, timeout=30000)  # 30 second timeout
+
+            # Wait a moment for any dynamic content to load
+            page.wait_for_timeout(3000)  # 3 second wait
+
+            # Get the final URL after all redirects and JS execution
+            final_url = page.url
+
+        finally:
+            browser.close()
+
+    # Extract base_time from the final URL
     if "base_time=" not in final_url:
         raise Exception(
             f"ECMWF redirect URL does not contain base_time parameter: {final_url}"
         )
-
-    # Extract base_time parameter from URL
-    import re
 
     match = re.search(r"base_time=(\d{12})", final_url)
     if not match:

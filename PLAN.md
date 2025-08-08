@@ -19,4 +19,6 @@
 - [x] Change all dates/times displayed on the page so they say today/yesterday/tomorrow and use daylight saving times (but don't bother to mention the timezone)
 - [x] Change "24 hour forecast" and "following 24 hours" in the inshore waters forecast to use the same format as the rest of the page
 - [x] Remove all fallback logic
+- [x] Replace ECMWF page fetching with headless browser
 
+## Current task

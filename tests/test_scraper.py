@@ -322,12 +322,14 @@ class TestGetLymeRegisLandsEndForecast:
 
 
 class TestGetLatestEcmwfBaseTime:
-    @patch("weather.scraper.requests.get")
-    def test_extracts_base_time_from_redirect(self, mock_get):
+    @patch("playwright.sync_api.sync_playwright")
+    def test_extracts_base_time_from_redirect(self, mock_playwright):
         """Test that base_time is extracted from ECMWF redirect URL."""
-        # Mock the response to simulate ECMWF redirect
-        mock_response = mock_get.return_value
-        mock_response.url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe&base_time=202508071200"
+        # Mock the Playwright chain
+        mock_p = mock_playwright.return_value.__enter__.return_value
+        mock_browser = mock_p.chromium.launch.return_value
+        mock_page = mock_browser.new_page.return_value
+        mock_page.url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe&base_time=202508071200"
 
         result = get_latest_ecmwf_base_time()
 
@@ -336,48 +338,68 @@ class TestGetLatestEcmwfBaseTime:
         assert "12:00 UTC" in result["readable_time"]
         assert "07 Aug 2025" in result["readable_time"]
 
-    @patch("weather.scraper.requests.get")
-    def test_raises_exception_when_no_base_time_in_redirect(self, mock_get):
+        # Verify Playwright was called correctly
+        mock_p.chromium.launch.assert_called_once_with(headless=True)
+        mock_browser.new_page.assert_called_once()
+        mock_page.goto.assert_called_once()
+        mock_browser.close.assert_called_once()
+
+    @patch("playwright.sync_api.sync_playwright")
+    def test_raises_exception_when_no_base_time_in_redirect(self, mock_playwright):
         """Test that exception is raised when redirect URL doesn't contain base_time."""
-        # Mock response with URL that doesn't contain base_time parameter
-        mock_response = mock_get.return_value
-        mock_response.url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe"
+        # Mock the Playwright chain
+        mock_p = mock_playwright.return_value.__enter__.return_value
+        mock_browser = mock_p.chromium.launch.return_value
+        mock_page = mock_browser.new_page.return_value
+        mock_page.url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe"
 
         with pytest.raises(
             Exception, match="ECMWF redirect URL does not contain base_time parameter"
         ):
             get_latest_ecmwf_base_time()
 
-    @patch("weather.scraper.requests.get")
-    def test_raises_exception_on_request_failure(self, mock_get):
-        """Test that request exceptions are raised properly."""
-        # Mock requests.get to raise an exception
-        mock_get.side_effect = requests.RequestException("Connection failed")
+    @patch("playwright.sync_api.sync_playwright")
+    def test_raises_exception_on_browser_failure(self, mock_playwright):
+        """Test that browser exceptions are raised properly."""
+        # Mock the Playwright chain to raise an exception
+        mock_p = mock_playwright.return_value.__enter__.return_value
+        mock_browser = mock_p.chromium.launch.return_value
+        mock_page = mock_browser.new_page.return_value
+        mock_page.goto.side_effect = Exception("Connection failed")
 
-        with pytest.raises(requests.RequestException, match="Connection failed"):
+        with pytest.raises(Exception, match="Connection failed"):
             get_latest_ecmwf_base_time()
 
-    @patch("weather.scraper.requests.get")
-    def test_raises_exception_when_base_time_malformed(self, mock_get):
+        # Verify browser cleanup still happened
+        mock_browser.close.assert_called_once()
+
+    @patch("playwright.sync_api.sync_playwright")
+    def test_raises_exception_when_base_time_malformed(self, mock_playwright):
         """Test that exception is raised when base_time format is invalid."""
-        # Mock response with malformed base_time
-        mock_response = mock_get.return_value
-        mock_response.url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe&base_time=invalid"
+        # Mock the Playwright chain
+        mock_p = mock_playwright.return_value.__enter__.return_value
+        mock_browser = mock_p.chromium.launch.return_value
+        mock_page = mock_browser.new_page.return_value
+        mock_page.url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe&base_time=invalid"
 
         with pytest.raises(
             Exception, match="Could not extract base_time from ECMWF URL"
         ):
             get_latest_ecmwf_base_time()
 
-    @patch("weather.scraper.requests.get")
-    def test_raises_exception_on_http_error(self, mock_get):
-        """Test that HTTP errors are raised properly."""
-        # Mock requests.get to raise HTTP error
-        mock_response = mock_get.return_value
-        mock_response.raise_for_status.side_effect = requests.HTTPError("404 Not Found")
+    @patch("playwright.sync_api.sync_playwright")
+    def test_browser_cleanup_on_success(self, mock_playwright):
+        """Test that browser is properly closed on successful execution."""
+        # Mock the Playwright chain
+        mock_p = mock_playwright.return_value.__enter__.return_value
+        mock_browser = mock_p.chromium.launch.return_value
+        mock_page = mock_browser.new_page.return_value
+        mock_page.url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe&base_time=202508071200"
 
-        with pytest.raises(requests.HTTPError, match="404 Not Found"):
-            get_latest_ecmwf_base_time()
+        get_latest_ecmwf_base_time()
+
+        # Verify browser cleanup
+        mock_browser.close.assert_called_once()
 
 
 class TestGetSailingLocations:

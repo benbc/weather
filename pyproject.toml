@@ -2,7 +2,11 @@
 name = "weather"
 version = "0.1.0"
 requires-python = ">=3.13"
-dependencies = ["beautifulsoup4>=4.13.4", "requests>=2.32.4"]
+dependencies = [
+    "beautifulsoup4>=4.13.4",
+    "playwright>=1.54.0",
+ "requests>=2.32.4",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
