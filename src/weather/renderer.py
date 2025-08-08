@@ -337,13 +337,10 @@ def _generate_meteogram_locations_html(base_time: str) -> str:
         )
         html_parts.append("<br>")
         html_parts.append(
-            f'<a href="{meteogram_url}" class="meteogram-link" '
-            f'target="_blank">View Meteogram →</a>'
+            f'<a href="{meteogram_url}" class="meteogram-link">View Meteogram →</a>'
         )
         html_parts.append(" | ")
-        html_parts.append(
-            f'<a href="{maps_url}" class="maps-link" target="_blank">View Map →</a>'
-        )
+        html_parts.append(f'<a href="{maps_url}" class="maps-link">View Map →</a>')
         html_parts.append("</div>")
 
     return "\n".join(html_parts)

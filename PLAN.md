@@ -23,5 +23,9 @@
 - [x] Workflow is failing on GitHub
 - [x] Run the workflow every ten minutes
 - [x] Add links to locations in Google Maps
+- [x] Open all links in the same browser tab, not a new one
+- [ ] Correct for limited location resolution in ECMWF forecasts
 
 ## Current task
+
+### Goal

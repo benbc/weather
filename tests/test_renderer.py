@@ -313,7 +313,6 @@ class TestGenerateMeteogramLocationsHtml:
         assert (
             "www.google.com/maps/place/50.0,-4.0/@50.0,-4.0,10z/data=!3m1!1e3" in result
         )
-        assert 'target="_blank"' in result
 
     @patch("weather.renderer.get_sailing_locations")
     def test_multiple_locations(self, mock_get_locations):
