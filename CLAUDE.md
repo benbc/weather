@@ -18,6 +18,7 @@ and so that I can see when updates are available.
   * remove current task details from plan (but not the document structure)
   * check off task
   * commit changes and push
+* don't move on to the next task without instruction
 
 ## Code style
 
