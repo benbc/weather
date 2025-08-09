@@ -29,6 +29,9 @@
 - [x] Specify locations based on human-friendly description
 - [x] Change the positions
 - [x] Visual redesign
+- [ ] Fix date-based tests to be deterministic and future-proof by mocking datetime.now() instead of using dynamic date calculations
+- [ ] Modify deploy task so that it waits for the workflow to complete and fails if the workflow fails
+- [ ] Add per-location last forecast dates for meteograms (just brief time and date at the end of the line e.g. "(1am today)")
 
 ## Current task
 
