@@ -46,7 +46,7 @@ verify-locations:
 
 # Test a specific coordinate to see what ECMWF location it maps to
 test-coordinate lat lon:
-    uv run python -c "from src.weather.location_tools import *; from src.weather.scraper import *; import sys; base_time = get_latest_ecmwf_base_time()['base_time']; url = generate_meteogram_url({{lat}}, {{lon}}, base_time); print(f'Testing coordinates: {{lat}}°N, {{lon}}°W'); print(f'Meteogram URL: {url}'); img_bytes = fetch_meteogram_image(url); extract_coordinates_from_meteogram(img_bytes)"
+    uv run python -c "from src.weather.location_tools import *; from src.weather.scraper import *; import sys; url = generate_meteogram_url({{lat}}, {{lon}}); print(f'Testing coordinates: {{lat}}°N, {{lon}}°W'); print(f'Meteogram URL: {url}'); img_bytes = fetch_meteogram_image(url); extract_coordinates_from_meteogram(img_bytes)"
 
 # Test distance calculation with known points  
 test-distance:

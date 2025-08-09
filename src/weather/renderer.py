@@ -332,12 +332,9 @@ def _generate_forecast_html(forecast_content: dict, forecast_issue_time: str) ->
     return "\n".join(html_parts)
 
 
-def _generate_meteogram_locations_html(base_time: str) -> str:
+def _generate_meteogram_locations_html() -> str:
     """
     Generate HTML for meteogram location links.
-
-    Args:
-        base_time: ECMWF base time in YYYYMMDDHHMM format
 
     Returns:
         HTML string for the meteogram locations
@@ -346,9 +343,7 @@ def _generate_meteogram_locations_html(base_time: str) -> str:
     html_parts = []
 
     for location in locations:
-        meteogram_url = generate_meteogram_url(
-            location["lat"], location["lon"], base_time
-        )
+        meteogram_url = generate_meteogram_url(location["lat"], location["lon"])
 
         # Generate Google Maps URL with satellite view and pin
         maps_url = (
@@ -406,13 +401,11 @@ def render_html(
     if ecmwf_data is None:
         ecmwf_data = get_latest_ecmwf_base_time()
 
-    # Generate ECMWF chart URL
-    ecmwf_chart_url = f"https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe&base_time={ecmwf_data['base_time']}"
+    # Generate ECMWF chart URL (without base_time to show most recent forecast)
+    ecmwf_chart_url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe"
 
     # Generate meteogram locations HTML
-    meteogram_locations_html = _generate_meteogram_locations_html(
-        ecmwf_data["base_time"]
-    )
+    meteogram_locations_html = _generate_meteogram_locations_html()
 
     # Get current timestamp and format it
     last_updated = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")

@@ -22,14 +22,14 @@ except ImportError:
     )
 
 try:
-    from .scraper import generate_meteogram_url, get_latest_ecmwf_base_time
+    from .scraper import generate_meteogram_url
 except ImportError:
     # Handle direct execution
     import sys
     from pathlib import Path
 
     sys.path.insert(0, str(Path(__file__).parent))
-    from scraper import generate_meteogram_url, get_latest_ecmwf_base_time
+    from scraper import generate_meteogram_url
 
 
 class GridSearchResult(NamedTuple):
@@ -72,8 +72,6 @@ def grid_search_location(
     print(f"Search radius: {search_radius:.3f}° (≈ {search_radius * 111:.1f}km)")
     print()
 
-    ecmwf_data = get_latest_ecmwf_base_time()
-    base_time = ecmwf_data["base_time"]
     results = []
 
     # Generate grid points
@@ -104,7 +102,7 @@ def grid_search_location(
 
             try:
                 # Generate meteogram URL
-                meteogram_url = generate_meteogram_url(test_lat, test_lon, base_time)
+                meteogram_url = generate_meteogram_url(test_lat, test_lon)
 
                 # Fetch meteogram image
                 image_bytes = fetch_meteogram_image(meteogram_url)

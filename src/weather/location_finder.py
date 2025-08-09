@@ -10,7 +10,7 @@ try:
         extract_coordinates_from_meteogram,
         fetch_meteogram_image,
     )
-    from .scraper import generate_meteogram_url, get_latest_ecmwf_base_time
+    from .scraper import generate_meteogram_url
 except ImportError:
     # Handle direct execution
     import sys
@@ -22,7 +22,7 @@ except ImportError:
         extract_coordinates_from_meteogram,
         fetch_meteogram_image,
     )
-    from scraper import generate_meteogram_url, get_latest_ecmwf_base_time
+    from scraper import generate_meteogram_url
 
 
 @dataclass
@@ -178,8 +178,6 @@ def search_for_sea_point(
         raise ValueError(f"Unknown landmark: {landmark_name}")
 
     landmark = LANDMARKS[landmark_name]
-    ecmwf_data = get_latest_ecmwf_base_time()
-    base_time = ecmwf_data["base_time"]
 
     target_distance_km = target_distance_nm * 1.852
     max_search_radius_km = max_search_radius_nm * 1.852
@@ -254,7 +252,7 @@ def search_for_sea_point(
 
             try:
                 # Generate meteogram URL and fetch
-                meteogram_url = generate_meteogram_url(test_lat, test_lon, base_time)
+                meteogram_url = generate_meteogram_url(test_lat, test_lon)
                 image_bytes = fetch_meteogram_image(meteogram_url)
 
                 # Extract actual ECMWF coordinates

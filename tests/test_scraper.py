@@ -453,39 +453,39 @@ class TestGetSailingLocations:
 class TestGenerateMeteogramUrl:
     def test_generates_correct_url_format(self):
         """Test that meteogram URL is generated with correct format."""
-        lat, lon, base_time = 49.95, -5.02, "202508070000"
+        lat, lon = 49.95, -5.02
 
-        result = generate_meteogram_url(lat, lon, base_time)
+        result = generate_meteogram_url(lat, lon)
 
         expected_url = (
             "https://charts.ecmwf.int/products/opencharts_meteogram?"
-            "base_time=202508070000&epsgram=classical_15d&lat=49.95&lon=-5.02"
+            "epsgram=classical_15d&lat=49.95&lon=-5.02"
         )
         assert result == expected_url
 
     def test_handles_negative_coordinates(self):
         """Test that negative coordinates are handled correctly."""
-        lat, lon, base_time = -12.34, -56.78, "202508070000"
+        lat, lon = -12.34, -56.78
 
-        result = generate_meteogram_url(lat, lon, base_time)
+        result = generate_meteogram_url(lat, lon)
 
         assert "lat=-12.34" in result
         assert "lon=-56.78" in result
 
     def test_handles_positive_coordinates(self):
         """Test that positive coordinates are handled correctly."""
-        lat, lon, base_time = 12.34, 56.78, "202508070000"
+        lat, lon = 12.34, 56.78
 
-        result = generate_meteogram_url(lat, lon, base_time)
+        result = generate_meteogram_url(lat, lon)
 
         assert "lat=12.34" in result
         assert "lon=56.78" in result
 
     def test_includes_all_required_parameters(self):
         """Test that all required URL parameters are included."""
-        result = generate_meteogram_url(49.95, -5.02, "202508070000")
+        result = generate_meteogram_url(49.95, -5.02)
 
-        assert "base_time=" in result
+        assert "base_time=" not in result  # No longer included
         assert "epsgram=classical_15d" in result
         assert "lat=" in result
         assert "lon=" in result
@@ -493,10 +493,13 @@ class TestGenerateMeteogramUrl:
             "https://charts.ecmwf.int/products/opencharts_meteogram?"
         )
 
-    def test_different_base_times(self):
-        """Test that different base times are handled correctly."""
-        base_times = ["202508070000", "202508070600", "202508071200", "202508071800"]
+    def test_url_format_without_base_time(self):
+        """Test URL generated without base_time parameter for latest forecast."""
+        result = generate_meteogram_url(49.95, -5.02)
 
-        for base_time in base_times:
-            result = generate_meteogram_url(49.95, -5.02, base_time)
-            assert f"base_time={base_time}" in result
+        # Should not contain base_time parameter
+        assert "base_time=" not in result
+        # Should start with correct parameters
+        assert "epsgram=classical_15d" in result
+        assert "lat=49.95" in result
+        assert "lon=-5.02" in result

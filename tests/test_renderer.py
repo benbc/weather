@@ -324,8 +324,7 @@ class TestGenerateMeteogramLocationsHtml:
             }
         ]
 
-        base_time = "202508071200"
-        result = _generate_meteogram_locations_html(base_time)
+        result = _generate_meteogram_locations_html()
 
         # Check that the location name is included
         assert "Test Location" in result
@@ -356,8 +355,7 @@ class TestGenerateMeteogramLocationsHtml:
             },
         ]
 
-        base_time = "202508071200"
-        result = _generate_meteogram_locations_html(base_time)
+        result = _generate_meteogram_locations_html()
 
         # Check that both locations are included
         assert "Location 1" in result
@@ -382,8 +380,7 @@ class TestGenerateMeteogramLocationsHtml:
             }
         ]
 
-        base_time = "202508071200"
-        result = _generate_meteogram_locations_html(base_time)
+        result = _generate_meteogram_locations_html()
 
         # Check that both links are included (no separator anymore)
         assert "Meteogram →" in result

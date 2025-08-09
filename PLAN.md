@@ -32,7 +32,7 @@
 - [x] I've manually updated the template. Remove CSS that is no longer needed.
 - [x] Fix date-based tests to be deterministic and future-proof by mocking datetime.now() instead of using dynamic date calculations
 - [x] Modify deploy task so that it waits for the workflow to complete and fails if the workflow fails
-- [ ] don't add base time to ECMWF URLs so if there happens to be an even more recent forecast by the time we view the page then we'll see it
+- [x] don't add base time to ECMWF URLs so if there happens to be an even more recent forecast by the time we view the page then we'll see it
 - [ ] Determine per-location last forecast dates for meteograms instead of using wind chart date; display for each location (just brief time and date at the end of the line e.g. "(released at 1am today)")
 - [ ] Add shipping forecast for sea areas Portland and Plymouth (see https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/shipping-forecast)
 - [ ] Modify design: two columns, with forecast detail on left and links to charts etc on right, adaptive so it remains one column on mobile

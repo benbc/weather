@@ -192,21 +192,20 @@ def get_sailing_locations() -> list[dict]:
     ]
 
 
-def generate_meteogram_url(lat: float, lon: float, base_time: str) -> str:
+def generate_meteogram_url(lat: float, lon: float) -> str:
     """
     Generate ECMWF meteogram URL for specific coordinates.
 
     Args:
         lat: Latitude in decimal degrees
         lon: Longitude in decimal degrees
-        base_time: ECMWF base time in YYYYMMDDHHMM format
 
     Returns:
-        Complete meteogram URL
+        Complete meteogram URL (without base_time to show most recent forecast)
     """
     return (
         f"https://charts.ecmwf.int/products/opencharts_meteogram?"
-        f"base_time={base_time}&epsgram=classical_15d&lat={lat}&lon={lon}"
+        f"epsgram=classical_15d&lat={lat}&lon={lon}"
     )
 
 
@@ -234,7 +233,5 @@ if __name__ == "__main__":
     print("\nLocation-specific meteograms:")
     locations = get_sailing_locations()
     for location in locations:
-        meteogram_url = generate_meteogram_url(
-            location["lat"], location["lon"], ecmwf_data["base_time"]
-        )
+        meteogram_url = generate_meteogram_url(location["lat"], location["lon"])
         print(f"{location['name']} ({location['description']}): {meteogram_url}")
