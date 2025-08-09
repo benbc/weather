@@ -145,6 +145,22 @@ class TestFormatRelativeDateTime:
         result = _format_relative_datetime(dt_str, "met_office")
         assert "tomorrow" in result
 
+    def test_yesterday_formatting(self):
+        """Test that yesterday dates are formatted correctly."""
+        from datetime import datetime, timedelta
+        from zoneinfo import ZoneInfo
+
+        # Create a date that's exactly yesterday from London perspective
+        london_tz = ZoneInfo("Europe/London")
+        yesterday = datetime.now(london_tz) - timedelta(days=1)
+
+        # Format as Met Office string
+        dt_str = yesterday.astimezone(ZoneInfo("UTC")).strftime(
+            "18:00 (UTC) on %a %d %b %Y"
+        )
+        result = _format_relative_datetime(dt_str, "met_office")
+        assert "yesterday" in result
+
 
 class TestFormatForecastTitle:
     def test_with_valid_forecast_issue_time(self):
