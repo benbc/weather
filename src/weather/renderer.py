@@ -10,6 +10,8 @@ from .scraper import (
     get_lyme_regis_lands_end_forecast,
     get_meteogram_forecast_time,
     get_sailing_locations,
+    get_shipping_forecast_areas,
+    get_shipping_forecast_period,
 )
 
 
@@ -164,6 +166,43 @@ def _format_relative_datetime(dt_str: str, source_format: str = "met_office") ->
         )
 
     return f"{time_str} {relative_day}"
+
+
+def _format_shipping_forecast_period(period_str: str) -> str:
+    """
+    Format shipping forecast period to use relative dates and times.
+
+    Args:
+        period_str: Original period string like
+            "For the period 06:00 (UTC) on Sat 9 Aug to 06:00 (UTC) on Sun 10 Aug"
+
+    Returns:
+        Formatted string like "From 7am today to 7am tomorrow"
+
+    Raises:
+        Exception: If period string cannot be parsed
+    """
+    import re
+
+    # Extract start and end times from the period string
+    pattern = (
+        r"For the period (\d{2}:\d{2} \(UTC\) on \w+ \d{1,2} \w+ \d{4}) to "
+        r"(\d{2}:\d{2} \(UTC\) on \w+ \d{1,2} \w+ \d{4})"
+    )
+    match = re.search(pattern, period_str)
+
+    if not match:
+        raise Exception(
+            f"Could not parse shipping forecast period format: {period_str}"
+        )
+
+    start_time_str, end_time_str = match.groups()
+
+    # Format each time using the existing function
+    formatted_start = _format_relative_datetime(start_time_str, "met_office")
+    formatted_end = _format_relative_datetime(end_time_str, "met_office")
+
+    return f"From {formatted_start} to {formatted_end}"
 
 
 def _format_forecast_title(
@@ -333,6 +372,64 @@ def _generate_forecast_html(forecast_content: dict, forecast_issue_time: str) ->
     return "\n".join(html_parts)
 
 
+def _generate_shipping_forecast_html() -> str:
+    """
+    Generate HTML for shipping forecast areas with period information.
+
+    Returns:
+        HTML string for the shipping forecast areas
+    """
+    shipping_url = (
+        "https://weather.metoffice.gov.uk/specialist-forecasts/"
+        "coast-and-sea/shipping-forecast"
+    )
+
+    # Get the forecast period and format it
+    shipping_period = get_shipping_forecast_period(shipping_url)
+    formatted_period = _format_shipping_forecast_period(shipping_period)
+
+    # Get the area forecasts
+    shipping_areas = get_shipping_forecast_areas(shipping_url, ["portland", "plymouth"])
+
+    html_parts = []
+
+    # Add the formatted period at the top
+    html_parts.append(f"<h4>{formatted_period}</h4>")
+
+    for area in shipping_areas:
+        html_parts.append(f"<h3>{area['area_name']}</h3>")
+        html_parts.append('<div class="forecast-details">')
+
+        # Group forecast items into three lines like the inshore forecast
+        wind_items = []
+        sea_state_items = []
+        weather_visibility_items = []
+
+        for item in area["forecast"]:
+            category = item["category"].lower()
+            formatted_item = (
+                f"<strong>{item['category']}</strong>: {item['description']}"
+            )
+            if "wind" in category:
+                wind_items.append(formatted_item)
+            elif "sea" in category or "state" in category:
+                sea_state_items.append(formatted_item)
+            else:  # Weather, Visibility, etc.
+                weather_visibility_items.append(formatted_item)
+
+        # Add each group as a separate line
+        if wind_items:
+            html_parts.append(" • ".join(wind_items) + "<br>")
+        if sea_state_items:
+            html_parts.append(" • ".join(sea_state_items) + "<br>")
+        if weather_visibility_items:
+            html_parts.append(" • ".join(weather_visibility_items))
+
+        html_parts.append("</div>")
+
+    return "\n".join(html_parts)
+
+
 def _generate_meteogram_locations_html() -> str:
     """
     Generate HTML for meteogram location links with per-location forecast times.
@@ -392,7 +489,10 @@ def render_html(
     with open(template_path, encoding="utf-8") as f:
         template = f.read()
 
-    url = "https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast"
+    url = (
+        "https://weather.metoffice.gov.uk/specialist-forecasts/"
+        "coast-and-sea/inshore-waters-forecast"
+    )
 
     # Get forecast date if not provided
     if forecast_date is None:
@@ -410,10 +510,16 @@ def render_html(
         ecmwf_data = get_latest_ecmwf_base_time()
 
     # Generate ECMWF chart URL (without base_time to show most recent forecast)
-    ecmwf_chart_url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe"
+    ecmwf_chart_url = (
+        "https://charts.ecmwf.int/products/medium-wind-10m?"
+        "projection=opencharts_north_west_europe"
+    )
 
     # Generate meteogram locations HTML
     meteogram_locations_html = _generate_meteogram_locations_html()
+
+    # Generate shipping forecast HTML
+    shipping_forecast_html = _generate_shipping_forecast_html()
 
     # Get current timestamp and format it
     last_updated = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -434,6 +540,7 @@ def render_html(
     rendered_html = rendered_html.replace(
         "{meteogram_locations}", meteogram_locations_html
     )
+    rendered_html = rendered_html.replace("{shipping_forecast}", shipping_forecast_html)
 
     # Ensure output directory exists
     output_dir = Path(output_path).parent

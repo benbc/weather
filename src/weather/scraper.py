@@ -112,7 +112,10 @@ def get_latest_ecmwf_base_time() -> dict:
 
     from playwright.sync_api import sync_playwright
 
-    base_url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe"
+    base_url = (
+        "https://charts.ecmwf.int/products/medium-wind-10m?"
+        "projection=opencharts_north_west_europe"
+    )
 
     with sync_playwright() as p:
         # Launch headless browser
@@ -280,8 +283,123 @@ def get_meteogram_forecast_time(lat: float, lon: float) -> dict:
     }
 
 
+def get_shipping_forecast_period(url: str) -> str:
+    """
+    Extract the forecast period from the shipping forecast page.
+
+    Args:
+        url: The URL of the Met Office shipping forecast page
+
+    Returns:
+        The forecast period string (e.g.,
+            "For the period 06:00 (UTC) on Sat 9 Aug to 06:00 (UTC) on Sun 10 Aug")
+
+    Raises:
+        Exception: If forecast period cannot be found or extracted
+    """
+    response = requests.get(url)
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    # Find the paragraph that contains "For the period"
+    period_paragraph = None
+    for p in soup.find_all("p"):
+        if "For the period" in p.get_text():
+            period_paragraph = p
+            break
+
+    if not period_paragraph:
+        raise Exception(
+            "Could not find 'For the period' paragraph in shipping forecast"
+        )
+
+    # Find all time elements within this paragraph
+    time_elements = period_paragraph.find_all("time")
+
+    if len(time_elements) < 2:
+        raise Exception(
+            "Could not find start and end time elements in forecast period paragraph"
+        )
+
+    # Extract the text from the time elements
+    start_time = time_elements[0].get_text().strip()
+    end_time = time_elements[1].get_text().strip()
+
+    return f"For the period {start_time} to {end_time}"
+
+
+def get_shipping_forecast_areas(url: str, area_names: list[str]) -> list[dict]:
+    """
+    Scrape shipping forecast data for specified sea areas.
+
+    Args:
+        url: The URL of the Met Office shipping forecast page
+        area_names: List of sea area names to extract (e.g., ["portland", "plymouth"])
+
+    Returns:
+        List of dictionaries containing the structured forecast data for each area
+
+    Raises:
+        Exception: If forecast areas cannot be found or extracted
+    """
+    response = requests.get(url)
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.content, "html.parser")
+
+    forecast_areas = []
+
+    for area_name in area_names:
+        # Find the section for this sea area
+        area_section = soup.find("section", {"id": area_name.lower()})
+        if not area_section:
+            raise Exception(f"Could not find {area_name} section in shipping forecast")
+
+        # Extract the area name from the h2 element
+        h2_element = area_section.find("h2")
+        if not h2_element:
+            raise Exception(f"Could not find h2 element for {area_name} section")
+
+        area_display_name = h2_element.get_text().strip()
+
+        # Find the forecast info within this section
+        forecast_info = area_section.find("div", class_="forecast-info")
+        if not forecast_info:
+            raise Exception(f"Could not find forecast-info div for {area_name}")
+
+        dl_element = forecast_info.find("dl")
+        if not dl_element:
+            raise Exception(f"Could not find dl element for {area_name} forecast data")
+
+        # Extract the forecast data
+        forecast_data = {"area_name": area_display_name, "forecast": []}
+
+        for dt, dd in zip(
+            dl_element.find_all("dt"), dl_element.find_all("dd"), strict=False
+        ):
+            forecast_data["forecast"].append(
+                {
+                    "category": dt.get_text().strip(),
+                    "description": dd.get_text().strip(),
+                }
+            )
+
+        if not forecast_data["forecast"]:
+            raise Exception(
+                f"Found {area_name} section but could not extract any forecast data"
+            )
+
+        forecast_areas.append(forecast_data)
+
+    return forecast_areas
+
+
 if __name__ == "__main__":
-    url = "https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast"
+    url = (
+        "https://weather.metoffice.gov.uk/specialist-forecasts/"
+        "coast-and-sea/inshore-waters-forecast"
+    )
     forecast_date = get_forecast_date(url)
     print(f"Latest forecast date: {forecast_date}")
 
@@ -298,11 +416,29 @@ if __name__ == "__main__":
     ecmwf_data = get_latest_ecmwf_base_time()
     print(f"\nECMWF Latest forecast: {ecmwf_data['readable_time']}")
     print(f"Base time: {ecmwf_data['base_time']}")
-    ecmwf_url = f"https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe&base_time={ecmwf_data['base_time']}"
+    ecmwf_url = (
+        f"https://charts.ecmwf.int/products/medium-wind-10m?"
+        f"projection=opencharts_north_west_europe&base_time={ecmwf_data['base_time']}"
+    )
     print(f"Chart URL: {ecmwf_url}")
 
     print("\nLocation-specific meteograms:")
     locations = get_sailing_locations()
     for location in locations:
         meteogram_url = generate_meteogram_url(location["lat"], location["lon"])
-        print(f"{location['name']} ({location['description']}): {meteogram_url}")
+        print(f"{location['name']}: {meteogram_url}")
+
+    # Test shipping forecast scraping
+    shipping_url = (
+        "https://weather.metoffice.gov.uk/specialist-forecasts/"
+        "coast-and-sea/shipping-forecast"
+    )
+    shipping_period = get_shipping_forecast_period(shipping_url)
+    print(f"\nShipping forecast period: {shipping_period}")
+
+    shipping_areas = get_shipping_forecast_areas(shipping_url, ["portland", "plymouth"])
+    print("\nShipping forecast:")
+    for area in shipping_areas:
+        print(f"\n{area['area_name']}:")
+        for item in area["forecast"]:
+            print(f"  {item['category']}: {item['description']}")

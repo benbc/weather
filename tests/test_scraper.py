@@ -11,6 +11,8 @@ from weather.scraper import (
     get_lyme_regis_lands_end_forecast,
     get_meteogram_forecast_time,
     get_sailing_locations,
+    get_shipping_forecast_areas,
+    get_shipping_forecast_period,
 )
 
 
@@ -573,3 +575,258 @@ class TestGenerateMeteogramUrl:
         assert "epsgram=classical_15d" in result
         assert "lat=49.95" in result
         assert "lon=-5.02" in result
+
+
+class TestGetShippingForecastAreas:
+    @responses.activate
+    def test_extracts_portland_and_plymouth_successfully(self):
+        """Test that Portland and Plymouth forecasts are extracted successfully."""
+        html_content = """
+        <html>
+            <section id="portland" class="marine-card">
+                <h2 id="area15" class="card-name">Portland</h2>
+                <div class="card-content">
+                    <div class="forecast-info">
+                        <dl>
+                            <dt>Wind</dt>
+                            <dd>Westerly 3 to 5</dd>
+                            <dt>Sea state</dt>
+                            <dd>Slight or moderate</dd>
+                            <dt>Weather</dt>
+                            <dd>Fair</dd>
+                            <dt>Visibility</dt>
+                            <dd>Good</dd>
+                        </dl>
+                    </div>
+                </div>
+            </section>
+            <section id="plymouth" class="marine-card">
+                <h2 id="area16" class="card-name">Plymouth</h2>
+                <div class="card-content">
+                    <div class="forecast-info">
+                        <dl>
+                            <dt>Wind</dt>
+                            <dd>Northerly 2 to 4</dd>
+                            <dt>Sea state</dt>
+                            <dd>Smooth or slight</dd>
+                            <dt>Weather</dt>
+                            <dd>Showers</dd>
+                            <dt>Visibility</dt>
+                            <dd>Moderate</dd>
+                        </dl>
+                    </div>
+                </div>
+            </section>
+        </html>
+        """
+        responses.add(
+            responses.GET, "https://example.com/shipping", body=html_content, status=200
+        )
+
+        result = get_shipping_forecast_areas(
+            "https://example.com/shipping", ["portland", "plymouth"]
+        )
+
+        assert len(result) == 2
+        assert result[0]["area_name"] == "Portland"
+        assert len(result[0]["forecast"]) == 4
+        assert result[0]["forecast"][0]["category"] == "Wind"
+        assert result[0]["forecast"][0]["description"] == "Westerly 3 to 5"
+
+        assert result[1]["area_name"] == "Plymouth"
+        assert len(result[1]["forecast"]) == 4
+        assert result[1]["forecast"][0]["category"] == "Wind"
+        assert result[1]["forecast"][0]["description"] == "Northerly 2 to 4"
+
+    @responses.activate
+    def test_raises_exception_when_area_not_found(self):
+        """Test that an exception is raised when a requested area is not found."""
+        html_content = """
+        <html>
+            <section id="biscay" class="marine-card">
+                <h2>Biscay</h2>
+            </section>
+        </html>
+        """
+        responses.add(
+            responses.GET, "https://example.com/shipping", body=html_content, status=200
+        )
+
+        with pytest.raises(
+            Exception, match="Could not find portland section in shipping forecast"
+        ):
+            get_shipping_forecast_areas("https://example.com/shipping", ["portland"])
+
+    @responses.activate
+    def test_raises_exception_when_no_h2_element(self):
+        """Test that an exception is raised when h2 element is missing."""
+        html_content = """
+        <html>
+            <section id="portland" class="marine-card">
+                <div class="card-content">
+                    <div class="forecast-info">
+                        <dl></dl>
+                    </div>
+                </div>
+            </section>
+        </html>
+        """
+        responses.add(
+            responses.GET, "https://example.com/shipping", body=html_content, status=200
+        )
+
+        with pytest.raises(
+            Exception, match="Could not find h2 element for portland section"
+        ):
+            get_shipping_forecast_areas("https://example.com/shipping", ["portland"])
+
+    @responses.activate
+    def test_raises_exception_when_no_forecast_info(self):
+        """Test that an exception is raised when forecast-info div is missing."""
+        html_content = """
+        <html>
+            <section id="portland" class="marine-card">
+                <h2>Portland</h2>
+                <div class="card-content">
+                </div>
+            </section>
+        </html>
+        """
+        responses.add(
+            responses.GET, "https://example.com/shipping", body=html_content, status=200
+        )
+
+        with pytest.raises(
+            Exception, match="Could not find forecast-info div for portland"
+        ):
+            get_shipping_forecast_areas("https://example.com/shipping", ["portland"])
+
+    @responses.activate
+    def test_raises_exception_when_no_dl_element(self):
+        """Test that an exception is raised when dl element is missing."""
+        html_content = """
+        <html>
+            <section id="portland" class="marine-card">
+                <h2>Portland</h2>
+                <div class="card-content">
+                    <div class="forecast-info">
+                    </div>
+                </div>
+            </section>
+        </html>
+        """
+        responses.add(
+            responses.GET, "https://example.com/shipping", body=html_content, status=200
+        )
+
+        with pytest.raises(
+            Exception, match="Could not find dl element for portland forecast data"
+        ):
+            get_shipping_forecast_areas("https://example.com/shipping", ["portland"])
+
+    @responses.activate
+    def test_raises_exception_when_no_forecast_data(self):
+        """Test that an exception is raised when no forecast data is found."""
+        html_content = """
+        <html>
+            <section id="portland" class="marine-card">
+                <h2>Portland</h2>
+                <div class="card-content">
+                    <div class="forecast-info">
+                        <dl></dl>
+                    </div>
+                </div>
+            </section>
+        </html>
+        """
+        responses.add(
+            responses.GET, "https://example.com/shipping", body=html_content, status=200
+        )
+
+        with pytest.raises(
+            Exception,
+            match="Found portland section but could not extract any forecast data",
+        ):
+            get_shipping_forecast_areas("https://example.com/shipping", ["portland"])
+
+    @responses.activate
+    def test_handles_http_error(self):
+        """Test that HTTP errors are handled."""
+        responses.add(responses.GET, "https://example.com/shipping", status=404)
+
+        with pytest.raises(requests.exceptions.HTTPError):
+            get_shipping_forecast_areas("https://example.com/shipping", ["portland"])
+
+
+class TestGetShippingForecastPeriod:
+    @responses.activate
+    def test_extracts_period_successfully(self):
+        """Test that shipping forecast period is extracted successfully."""
+        html_content = """
+        <html>
+            <p>Some other text</p>
+            <p>For the period
+            <time datetime="2025-08-09T06:00:00Z">06:00 (UTC) on Sat 9 Aug 2025</time>
+            to
+            <time datetime="2025-08-10T06:00:00Z">06:00 (UTC) on Sun 10 Aug 2025</time>.
+            </p>
+        </html>
+        """
+        responses.add(
+            responses.GET, "https://example.com/shipping", body=html_content, status=200
+        )
+
+        result = get_shipping_forecast_period("https://example.com/shipping")
+
+        expected = (
+            "For the period 06:00 (UTC) on Sat 9 Aug 2025 to "
+            "06:00 (UTC) on Sun 10 Aug 2025"
+        )
+        assert result == expected
+
+    @responses.activate
+    def test_raises_exception_when_no_period_paragraph(self):
+        """Test exception when 'For the period' paragraph not found."""
+        html_content = """
+        <html>
+            <p>Some text but no period information</p>
+        </html>
+        """
+        responses.add(
+            responses.GET, "https://example.com/shipping", body=html_content, status=200
+        )
+
+        with pytest.raises(
+            Exception,
+            match="Could not find 'For the period' paragraph in shipping forecast",
+        ):
+            get_shipping_forecast_period("https://example.com/shipping")
+
+    @responses.activate
+    def test_raises_exception_when_insufficient_time_elements(self):
+        """Test that an exception is raised when there are not enough time elements."""
+        html_content = """
+        <html>
+            <p>For the period
+            <time datetime="2025-08-09T06:00:00Z">06:00 (UTC) on Sat 9 Aug 2025</time>
+            only one time element.
+            </p>
+        </html>
+        """
+        responses.add(
+            responses.GET, "https://example.com/shipping", body=html_content, status=200
+        )
+
+        with pytest.raises(
+            Exception,
+            match="Could not find start and end time elements",
+        ):
+            get_shipping_forecast_period("https://example.com/shipping")
+
+    @responses.activate
+    def test_handles_http_error(self):
+        """Test that HTTP errors are handled."""
+        responses.add(responses.GET, "https://example.com/shipping", status=404)
+
+        with pytest.raises(requests.exceptions.HTTPError):
+            get_shipping_forecast_period("https://example.com/shipping")

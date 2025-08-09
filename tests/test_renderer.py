@@ -9,8 +9,10 @@ import pytest
 from weather.renderer import (
     _format_forecast_title,
     _format_relative_datetime,
+    _format_shipping_forecast_period,
     _generate_forecast_html,
     _generate_meteogram_locations_html,
+    _generate_shipping_forecast_html,
     render_html,
 )
 
@@ -442,3 +444,168 @@ class TestGenerateMeteogramLocationsHtml:
 
         # Verify forecast time was fetched for the location
         mock_get_forecast_time.assert_called_once_with(50.0, -4.0)
+
+
+class TestGenerateShippingForecastHtml:
+    @patch("weather.renderer.get_shipping_forecast_period")
+    @patch("weather.renderer.get_shipping_forecast_areas")
+    @patch("weather.renderer._format_shipping_forecast_period")
+    def test_generates_shipping_forecast_html_successfully(
+        self, mock_format_period, mock_get_shipping_areas, mock_get_period
+    ):
+        """Test that shipping forecast HTML is generated correctly."""
+        mock_get_period.return_value = (
+            "For the period 06:00 (UTC) on Sat 9 Aug to 06:00 (UTC) on Sun 10 Aug"
+        )
+        mock_format_period.return_value = "From 7am today to 7am tomorrow"
+        mock_get_shipping_areas.return_value = [
+            {
+                "area_name": "Portland",
+                "forecast": [
+                    {"category": "Wind", "description": "Westerly 3 to 5"},
+                    {"category": "Sea state", "description": "Slight or moderate"},
+                    {"category": "Weather", "description": "Fair"},
+                    {"category": "Visibility", "description": "Good"},
+                ],
+            },
+            {
+                "area_name": "Plymouth",
+                "forecast": [
+                    {"category": "Wind", "description": "Northerly 2 to 4"},
+                    {"category": "Sea state", "description": "Smooth or slight"},
+                    {"category": "Weather", "description": "Showers"},
+                    {"category": "Visibility", "description": "Moderate"},
+                ],
+            },
+        ]
+
+        result = _generate_shipping_forecast_html()
+
+        # Check that the formatted period appears at the top
+        assert "<h4>From 7am today to 7am tomorrow</h4>" in result
+
+        # Check that both area names are present as h3 headers
+        assert "<h3>Portland</h3>" in result
+        assert "<h3>Plymouth</h3>" in result
+
+        # Check that forecast details are properly formatted
+        assert '<div class="forecast-details">' in result
+        assert "<strong>Wind</strong>: Westerly 3 to 5" in result
+        assert "<strong>Sea state</strong>: Slight or moderate" in result
+        assert "<strong>Weather</strong>: Fair" in result
+        assert "<strong>Visibility</strong>: Good" in result
+
+        # Check Plymouth data is also present
+        assert "<strong>Wind</strong>: Northerly 2 to 4" in result
+        assert "<strong>Weather</strong>: Showers" in result
+
+        # Verify the functions were called with correct parameters
+        mock_get_period.assert_called_once_with(
+            "https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/shipping-forecast"
+        )
+        mock_format_period.assert_called_once_with(
+            "For the period 06:00 (UTC) on Sat 9 Aug to 06:00 (UTC) on Sun 10 Aug"
+        )
+        mock_get_shipping_areas.assert_called_once_with(
+            "https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/shipping-forecast",
+            ["portland", "plymouth"],
+        )
+
+    @patch("weather.renderer.get_shipping_forecast_period")
+    @patch("weather.renderer.get_shipping_forecast_areas")
+    @patch("weather.renderer._format_shipping_forecast_period")
+    def test_groups_forecast_items_correctly(
+        self, mock_format_period, mock_get_shipping_areas, mock_get_period
+    ):
+        """Test that forecast items are grouped into separate lines correctly."""
+        mock_get_period.return_value = (
+            "For the period 06:00 (UTC) on Sat 9 Aug to 06:00 (UTC) on Sun 10 Aug"
+        )
+        mock_format_period.return_value = "From 7am today to 7am tomorrow"
+        mock_get_shipping_areas.return_value = [
+            {
+                "area_name": "Portland",
+                "forecast": [
+                    {"category": "Wind", "description": "Westerly 3 to 5"},
+                    {"category": "Sea state", "description": "Slight or moderate"},
+                    {"category": "Weather", "description": "Fair"},
+                    {"category": "Visibility", "description": "Good"},
+                ],
+            }
+        ]
+
+        result = _generate_shipping_forecast_html()
+
+        # Wind should be on its own line (followed by <br>)
+        assert "<strong>Wind</strong>: Westerly 3 to 5<br>" in result
+
+        # Sea state should be on its own line (followed by <br>)
+        assert "<strong>Sea state</strong>: Slight or moderate<br>" in result
+
+        # Weather and visibility should be on the same line (no <br> after visibility)
+        assert (
+            "<strong>Weather</strong>: Fair • <strong>Visibility</strong>: Good"
+            in result
+        )
+
+    @patch("weather.renderer.get_shipping_forecast_period")
+    @patch("weather.renderer.get_shipping_forecast_areas")
+    @patch("weather.renderer._format_shipping_forecast_period")
+    def test_handles_empty_forecast_areas(
+        self, mock_format_period, mock_get_shipping_areas, mock_get_period
+    ):
+        """Test that empty forecast areas list is handled correctly."""
+        mock_get_period.return_value = (
+            "For the period 06:00 (UTC) on Sat 9 Aug to 06:00 (UTC) on Sun 10 Aug"
+        )
+        mock_format_period.return_value = "From 7am today to 7am tomorrow"
+        mock_get_shipping_areas.return_value = []
+
+        result = _generate_shipping_forecast_html()
+
+        # Should include the period but no area content
+        assert "<h4>From 7am today to 7am tomorrow</h4>" in result
+        # Should not contain area headers since no areas were provided
+        assert "<h3>" not in result
+
+
+class TestFormatShippingForecastPeriod:
+    def test_formats_period_with_relative_dates(self):
+        """Test that shipping forecast period is formatted with relative dates."""
+        period_str = (
+            "For the period 07:00 (UTC) on Thu 7 Aug 2025 to "
+            "07:00 (UTC) on Fri 8 Aug 2025"
+        )
+
+        with patch("weather.renderer._format_relative_datetime") as mock_format:
+            mock_format.side_effect = ["8am thursday", "8am friday"]
+
+            result = _format_shipping_forecast_period(period_str)
+
+            assert result == "From 8am thursday to 8am friday"
+            assert mock_format.call_count == 2
+            mock_format.assert_any_call("07:00 (UTC) on Thu 7 Aug 2025", "met_office")
+            mock_format.assert_any_call("07:00 (UTC) on Fri 8 Aug 2025", "met_office")
+
+    def test_raises_exception_for_invalid_format(self):
+        """Test that an exception is raised for invalid period format."""
+        invalid_period = "Invalid period format"
+
+        with pytest.raises(
+            Exception, match="Could not parse shipping forecast period format"
+        ):
+            _format_shipping_forecast_period(invalid_period)
+
+    def test_handles_today_tomorrow_format(self):
+        """Test formatting with today and tomorrow."""
+        period_str = (
+            "For the period 06:00 (UTC) on Sat 9 Aug 2025 "
+            "to 06:00 (UTC) on Sun 10 Aug 2025"
+        )
+
+        with patch("weather.renderer._format_relative_datetime") as mock_format:
+            mock_format.side_effect = ["7am today", "7am tomorrow"]
+
+            result = _format_shipping_forecast_period(period_str)
+
+            assert result == "From 7am today to 7am tomorrow"
