@@ -37,11 +37,26 @@
 - [x] Add shipping forecast for sea areas Portland and Plymouth (see https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/shipping-forecast)
 - [ ] Modify design: two columns, with forecast detail on left and links to charts etc on right, adaptive so it remains one column on mobile
 - [ ] Change styling for all forecast dates so they are not bold or larger letters and don't have colons at the end
+- [ ] Remove the bullet points in the weather/visibility lines
 
 ## Current task
 
 ### Goal
 
+Modify the design to use two columns: forecast detail on the left and links to charts etc on the right. The layout should be adaptive so it remains one column on mobile devices.
+
 ### Approach
 
+1. Examine the current HTML template structure to understand the layout
+2. Create CSS for a responsive two-column layout using CSS Grid or Flexbox
+3. Restructure the HTML template to separate forecast content from chart links
+4. Ensure the layout collapses to single column on mobile using media queries
+5. Test the responsive behavior
+
 ### Checklist
+
+- [ ] Examine current HTML template structure
+- [ ] Create CSS for two-column responsive layout
+- [ ] Update HTML template with new layout structure
+- [ ] Test responsive behavior on mobile
+- [ ] Run tests and verify everything works
