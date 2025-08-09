@@ -20,7 +20,9 @@ class TestFormatRelativeDateTime:
         result = _format_relative_datetime(dt_str, "met_office")
         assert "7pm" in result
         # Date may be relative (today/tomorrow/yesterday) or day name (thursday)
-        assert any(day in result for day in ["today", "tomorrow", "yesterday", "thursday"])
+        assert any(
+            day in result for day in ["today", "tomorrow", "yesterday", "thursday"]
+        )
 
     def test_met_office_format_without_time(self):
         """Test Met Office format without time component."""
@@ -34,7 +36,9 @@ class TestFormatRelativeDateTime:
         result = _format_relative_datetime(dt_str, "ecmwf")
         assert "1pm" in result
         # Date may be relative (today/tomorrow/yesterday) or day name (thursday)
-        assert any(day in result for day in ["today", "tomorrow", "yesterday", "thursday"])
+        assert any(
+            day in result for day in ["today", "tomorrow", "yesterday", "thursday"]
+        )
 
     def test_timestamp_format(self):
         """Test timestamp format parsing."""
@@ -42,7 +46,9 @@ class TestFormatRelativeDateTime:
         result = _format_relative_datetime(dt_str, "timestamp")
         assert "4:30pm" in result or "3:30pm" in result
         # Date may be relative (today/tomorrow/yesterday) or day name (thursday)
-        assert any(day in result for day in ["today", "tomorrow", "yesterday", "thursday"])
+        assert any(
+            day in result for day in ["today", "tomorrow", "yesterday", "thursday"]
+        )
 
     def test_raises_exception_for_unknown_format(self):
         """Test that exception is raised for unknown source format."""

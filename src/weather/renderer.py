@@ -288,7 +288,8 @@ def _generate_forecast_html(forecast_content: dict, forecast_issue_time: str) ->
 
     # Add area name (remove area number in parentheses)
     import re
-    area_name = re.sub(r'\s*\(\d+\)$', '', forecast_content['area_name'])
+
+    area_name = re.sub(r"\s*\(\d+\)$", "", forecast_content["area_name"])
     html_parts.append(f"<h3>{area_name}</h3>")
 
     # Add each forecast section
@@ -307,13 +308,13 @@ def _generate_forecast_html(forecast_content: dict, forecast_issue_time: str) ->
         weather_visibility_items = []
 
         for item in section["content"]:
-            category = item['category'].lower()
+            category = item["category"].lower()
             formatted_item = (
                 f"<strong>{item['category']}</strong>: {item['description']}"
             )
-            if 'wind' in category:
+            if "wind" in category:
                 wind_items.append(formatted_item)
-            elif 'sea' in category or 'state' in category:
+            elif "sea" in category or "state" in category:
                 sea_state_items.append(formatted_item)
             else:  # Weather, Visibility, etc.
                 weather_visibility_items.append(formatted_item)
@@ -326,7 +327,7 @@ def _generate_forecast_html(forecast_content: dict, forecast_issue_time: str) ->
         if weather_visibility_items:
             html_parts.append(" • ".join(weather_visibility_items))
 
-        html_parts.append('</div>')
+        html_parts.append("</div>")
 
     return "\n".join(html_parts)
 
