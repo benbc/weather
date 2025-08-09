@@ -17,6 +17,7 @@ Since this is a maritime application, all distances should be given in nautical 
 * Pick items to work on from the Tasks list
 * When picking up a new task, describe the goal and your approach in the Current task section
 * Maintain a checklist when working on a task
+* Run `just dev-render` so the human can do manual verification easily
 * when the person instructing you agrees that a task is complete:
   * remove current task details from plan (but not the document structure)
   * check off task
