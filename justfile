@@ -64,7 +64,7 @@ optimize-lizard:
 optimize-dart:  
     just optimize-location-test "River Dart (1M off entrance)" 50.32 -3.57
 
-# Deploy: pull, push, run workflow, and check status
+# Deploy: pull, push, run workflow, and wait for completion
 deploy:
     @echo "🚀 Starting deployment process..."
     @echo "📥 Pulling latest changes..."
@@ -74,10 +74,10 @@ deploy:
     @echo "⚡ Triggering workflow..."
     gh workflow run "Update Weather Forecast"
     @echo "⏳ Waiting for workflow to start..."
-    sleep 5
-    @echo "📊 Checking workflow status..."
-    gh run list --workflow="Update Weather Forecast" --limit=1
-    @echo "✅ Deployment triggered! Use 'just check-deployment' to monitor progress."
+    sleep 10
+    @echo "👀 Watching workflow until completion..."
+    gh run watch --exit-status --compact $(gh run list --workflow="Update Weather Forecast" --limit=1 --json databaseId --jq '.[0].databaseId')
+    @echo "✅ Deployment completed successfully!"
 
 # Test deployment commands without actually deploying
 deploy-dry-run:
