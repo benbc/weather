@@ -175,11 +175,11 @@ class TestFormatForecastTitle:
 
         result = _format_forecast_title("24 hour forecast:", 0, issue_time)
         assert result.startswith("From")
-        assert ":" in result
+        assert not result.endswith(":")
 
         result = _format_forecast_title("Following 24 hours:", 1, issue_time)
         assert result.startswith("From")
-        assert ":" in result
+        assert not result.endswith(":")
 
     def test_raises_exception_for_unparseable_issue_time(self):
         """Test that exception is raised for unparseable issue time."""
@@ -202,7 +202,7 @@ class TestFormatForecastTitle:
         result = _format_forecast_title("24 hour forecast:", 0, issue_time)
         # Should contain "From" and use day name instead of relative date
         assert "From" in result
-        assert ":" in result
+        assert not result.endswith(":")
 
     def test_time_formatting_on_the_hour(self):
         """Test time formatting when forecast starts on the hour."""
@@ -216,15 +216,23 @@ class TestFormatForecastTitle:
         issue_time = "12:30 (UTC) on Thu 7 Aug 2025"
         result = _format_forecast_title("24 hour forecast:", 0, issue_time)
         assert "From" in result
-        assert "1:30pm" in result  # Should show hour with minutes
+        assert "1pm" in result  # Should show hour without minutes for forecast periods
 
-    def test_yesterday_section_date(self):
+    @patch("weather.renderer.datetime")
+    def test_yesterday_section_date(self, mock_datetime):
         """Test forecast section that starts yesterday."""
+        # Mock current time as Aug 8, 2025 12:00 PM London time
+        london_tz = ZoneInfo("Europe/London")
+        fixed_now = datetime(2025, 8, 8, 12, 0, 0, tzinfo=london_tz)
+        # Configure the mock to return fixed time for now() but pass through others
+        mock_datetime.now.return_value = fixed_now
+        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+        mock_datetime.strptime = datetime.strptime
         # Issue time is today, but section -1 (24 hours ago) would be yesterday
-        issue_time = "12:00 (UTC) on Thu 7 Aug 2025"
+        issue_time = "12:00 (UTC) on Fri 8 Aug 2025"
         result = _format_forecast_title("previous forecast:", -1, issue_time)
         assert "From" in result
-        # Should contain yesterday reference
+        assert "yesterday" in result
 
     def test_tomorrow_section_date(self):
         """Test forecast section that starts tomorrow."""
@@ -544,8 +552,7 @@ class TestGenerateShippingForecastHtml:
 
         # Weather and visibility should be on the same line (no <br> after visibility)
         assert (
-            "<strong>Weather</strong>: Fair • <strong>Visibility</strong>: Good"
-            in result
+            "<strong>Weather</strong>: Fair <strong>Visibility</strong>: Good" in result
         )
 
     @patch("weather.renderer.get_shipping_forecast_period")

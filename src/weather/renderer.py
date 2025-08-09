@@ -223,8 +223,6 @@ def _format_forecast_title(
         Exception: If forecast issue time cannot be parsed
     """
     # Calculate start time for each section based on issue time
-    from datetime import datetime, timedelta
-    from zoneinfo import ZoneInfo
 
     london_tz = ZoneInfo("Europe/London")
 
@@ -293,23 +291,16 @@ def _format_forecast_title(
     else:
         day_text = section_start_local.strftime("%A").lower()
 
-    # Format time with am/pm, omit minutes if on the hour
-    minute = section_start_local.minute
-    if minute == 0:
-        time_text = (
-            section_start_local.strftime("%I").lstrip("0")
-            + section_start_local.strftime("%p").lower()
-        )
-    else:
-        time_text = (
-            section_start_local.strftime("%I:%M").lstrip("0")
-            + section_start_local.strftime("%p").lower()
-        )
+    # Format time with am/pm, always omit minutes for forecast periods
+    time_text = (
+        section_start_local.strftime("%I").lstrip("0")
+        + section_start_local.strftime("%p").lower()
+    )
 
     start_time_formatted = f"{time_text} {day_text}"
 
     # Generate title based on section
-    return f"From {start_time_formatted}:"
+    return f"From {start_time_formatted}"
 
 
 def _generate_forecast_html(forecast_content: dict, forecast_issue_time: str) -> str:
@@ -365,7 +356,7 @@ def _generate_forecast_html(forecast_content: dict, forecast_issue_time: str) ->
         if sea_state_items:
             html_parts.append(" • ".join(sea_state_items) + "<br>")
         if weather_visibility_items:
-            html_parts.append(" • ".join(weather_visibility_items))
+            html_parts.append(" ".join(weather_visibility_items))
 
         html_parts.append("</div>")
 
@@ -423,7 +414,7 @@ def _generate_shipping_forecast_html() -> str:
         if sea_state_items:
             html_parts.append(" • ".join(sea_state_items) + "<br>")
         if weather_visibility_items:
-            html_parts.append(" • ".join(weather_visibility_items))
+            html_parts.append(" ".join(weather_visibility_items))
 
         html_parts.append("</div>")
 
