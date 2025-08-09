@@ -209,6 +209,77 @@ def generate_meteogram_url(lat: float, lon: float) -> str:
     )
 
 
+def get_meteogram_forecast_time(lat: float, lon: float) -> dict:
+    """
+    Get the forecast time for a specific meteogram location.
+
+    Uses a headless browser to navigate to the meteogram page and extract
+    the forecast time from the final URL after JavaScript execution.
+
+    Args:
+        lat: Latitude in decimal degrees
+        lon: Longitude in decimal degrees
+
+    Returns:
+        Dictionary containing base_time string (YYYYMMDDHHMM format) and
+        human-readable description
+
+    Raises:
+        Exception: If meteogram request fails or base_time cannot be extracted
+    """
+    import re
+
+    from playwright.sync_api import sync_playwright
+
+    meteogram_url = generate_meteogram_url(lat, lon)
+
+    with sync_playwright() as p:
+        # Launch headless browser
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+
+        try:
+            # Navigate to meteogram page - this will execute JS and handle redirects
+            page.goto(meteogram_url, timeout=30000)  # 30 second timeout
+
+            # Wait a moment for any dynamic content to load
+            page.wait_for_timeout(3000)  # 3 second wait
+
+            # Get the final URL after all redirects and JS execution
+            final_url = page.url
+
+        finally:
+            browser.close()
+
+    # Extract base_time from the final URL
+    if "base_time=" not in final_url:
+        raise Exception(
+            f"Meteogram redirect URL does not contain base_time parameter: {final_url}"
+        )
+
+    match = re.search(r"base_time=(\d{12})", final_url)
+    if not match:
+        raise Exception(f"Could not extract base_time from meteogram URL: {final_url}")
+
+    base_time_str = match.group(1)
+
+    # Parse the base time to create readable format
+    year = int(base_time_str[:4])
+    month = int(base_time_str[4:6])
+    day = int(base_time_str[6:8])
+    hour = int(base_time_str[8:10])
+    minute = int(base_time_str[10:12])
+
+    forecast_dt = datetime(year, month, day, hour, minute)
+    readable_time = forecast_dt.strftime("%H:%M UTC on %a %d %b %Y")
+
+    return {
+        "base_time": base_time_str,
+        "readable_time": readable_time,
+        "datetime": forecast_dt,
+    }
+
+
 if __name__ == "__main__":
     url = "https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast"
     forecast_date = get_forecast_date(url)

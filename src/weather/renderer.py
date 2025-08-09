@@ -8,6 +8,7 @@ from .scraper import (
     get_forecast_date,
     get_latest_ecmwf_base_time,
     get_lyme_regis_lands_end_forecast,
+    get_meteogram_forecast_time,
     get_sailing_locations,
 )
 
@@ -334,7 +335,7 @@ def _generate_forecast_html(forecast_content: dict, forecast_issue_time: str) ->
 
 def _generate_meteogram_locations_html() -> str:
     """
-    Generate HTML for meteogram location links.
+    Generate HTML for meteogram location links with per-location forecast times.
 
     Returns:
         HTML string for the meteogram locations
@@ -351,6 +352,12 @@ def _generate_meteogram_locations_html() -> str:
             f"/@{location['lat']},{location['lon']},10z/data=!3m1!1e3"
         )
 
+        # Get forecast time for this specific location
+        meteogram_data = get_meteogram_forecast_time(location["lat"], location["lon"])
+        formatted_time = _format_relative_datetime(
+            meteogram_data["readable_time"], "ecmwf"
+        )
+
         html_parts.append('<div class="location-item">')
         html_parts.append(f'<span class="location-name">{location["name"]}</span> ')
         html_parts.append(
@@ -358,6 +365,7 @@ def _generate_meteogram_locations_html() -> str:
         )
         html_parts.append(" ")
         html_parts.append(f'<a href="{maps_url}" class="maps-link">Location →</a>')
+        html_parts.append(f" (released at {formatted_time})")
         html_parts.append("</div>")
 
     return "\n".join(html_parts)

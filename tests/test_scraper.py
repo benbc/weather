@@ -9,6 +9,7 @@ from weather.scraper import (
     get_forecast_date,
     get_latest_ecmwf_base_time,
     get_lyme_regis_lands_end_forecast,
+    get_meteogram_forecast_time,
     get_sailing_locations,
 )
 
@@ -397,6 +398,75 @@ class TestGetLatestEcmwfBaseTime:
         mock_page.url = "https://charts.ecmwf.int/products/medium-wind-10m?projection=opencharts_north_west_europe&base_time=202508071200"
 
         get_latest_ecmwf_base_time()
+
+        # Verify browser cleanup
+        mock_browser.close.assert_called_once()
+
+
+class TestGetMeteogramForecastTime:
+    @patch("playwright.sync_api.sync_playwright")
+    def test_extracts_forecast_time_from_meteogram_redirect(self, mock_playwright):
+        """Test that forecast time is extracted from meteogram redirect URL."""
+        # Mock the Playwright chain
+        mock_p = mock_playwright.return_value.__enter__.return_value
+        mock_browser = mock_p.chromium.launch.return_value
+        mock_page = mock_browser.new_page.return_value
+        mock_page.url = "https://charts.ecmwf.int/products/opencharts_meteogram?base_time=202508071200&epsgram=classical_15d&lat=50.23&lon=-3.47"
+
+        result = get_meteogram_forecast_time(50.23, -3.47)
+
+        assert isinstance(result, dict)
+        assert result["base_time"] == "202508071200"
+        assert "12:00 UTC" in result["readable_time"]
+        assert "07 Aug 2025" in result["readable_time"]
+
+        # Verify Playwright was called correctly
+        mock_p.chromium.launch.assert_called_once_with(headless=True)
+        mock_browser.new_page.assert_called_once()
+        mock_page.goto.assert_called_once()
+        mock_browser.close.assert_called_once()
+
+    @patch("playwright.sync_api.sync_playwright")
+    def test_raises_exception_when_no_base_time_in_meteogram_redirect(
+        self, mock_playwright
+    ):
+        """Test exception when meteogram redirect URL lacks base_time."""
+        # Mock the Playwright chain
+        mock_p = mock_playwright.return_value.__enter__.return_value
+        mock_browser = mock_p.chromium.launch.return_value
+        mock_page = mock_browser.new_page.return_value
+        mock_page.url = "https://charts.ecmwf.int/products/opencharts_meteogram?epsgram=classical_15d&lat=50.23&lon=-3.47"
+
+        with pytest.raises(
+            Exception,
+            match="Meteogram redirect URL does not contain base_time parameter",
+        ):
+            get_meteogram_forecast_time(50.23, -3.47)
+
+    @patch("playwright.sync_api.sync_playwright")
+    def test_raises_exception_when_meteogram_base_time_malformed(self, mock_playwright):
+        """Test that exception is raised when meteogram base_time format is invalid."""
+        # Mock the Playwright chain
+        mock_p = mock_playwright.return_value.__enter__.return_value
+        mock_browser = mock_p.chromium.launch.return_value
+        mock_page = mock_browser.new_page.return_value
+        mock_page.url = "https://charts.ecmwf.int/products/opencharts_meteogram?base_time=invalid&epsgram=classical_15d&lat=50.23&lon=-3.47"
+
+        with pytest.raises(
+            Exception, match="Could not extract base_time from meteogram URL"
+        ):
+            get_meteogram_forecast_time(50.23, -3.47)
+
+    @patch("playwright.sync_api.sync_playwright")
+    def test_meteogram_browser_cleanup_on_success(self, mock_playwright):
+        """Test that browser is properly closed on successful meteogram execution."""
+        # Mock the Playwright chain
+        mock_p = mock_playwright.return_value.__enter__.return_value
+        mock_browser = mock_p.chromium.launch.return_value
+        mock_page = mock_browser.new_page.return_value
+        mock_page.url = "https://charts.ecmwf.int/products/opencharts_meteogram?base_time=202508071200&epsgram=classical_15d&lat=50.23&lon=-3.47"
+
+        get_meteogram_forecast_time(50.23, -3.47)
 
         # Verify browser cleanup
         mock_browser.close.assert_called_once()

@@ -313,8 +313,11 @@ class TestRenderHtml:
 
 
 class TestGenerateMeteogramLocationsHtml:
+    @patch("weather.renderer.get_meteogram_forecast_time")
     @patch("weather.renderer.get_sailing_locations")
-    def test_includes_google_maps_links(self, mock_get_locations):
+    def test_includes_google_maps_links(
+        self, mock_get_locations, mock_get_forecast_time
+    ):
         """Test that Google Maps links with satellite view are included."""
         mock_get_locations.return_value = [
             {
@@ -323,6 +326,11 @@ class TestGenerateMeteogramLocationsHtml:
                 "lon": -4.0,
             }
         ]
+        mock_get_forecast_time.return_value = {
+            "base_time": "202508071200",
+            "readable_time": "12:00 UTC on Thu 07 Aug 2025",
+            "datetime": None,
+        }
 
         result = _generate_meteogram_locations_html()
 
@@ -339,8 +347,9 @@ class TestGenerateMeteogramLocationsHtml:
             "www.google.com/maps/place/50.0,-4.0/@50.0,-4.0,10z/data=!3m1!1e3" in result
         )
 
+    @patch("weather.renderer.get_meteogram_forecast_time")
     @patch("weather.renderer.get_sailing_locations")
-    def test_multiple_locations(self, mock_get_locations):
+    def test_multiple_locations(self, mock_get_locations, mock_get_forecast_time):
         """Test that multiple locations are rendered correctly."""
         mock_get_locations.return_value = [
             {
@@ -354,6 +363,11 @@ class TestGenerateMeteogramLocationsHtml:
                 "lon": -3.0,
             },
         ]
+        mock_get_forecast_time.return_value = {
+            "base_time": "202508071200",
+            "readable_time": "12:00 UTC on Thu 07 Aug 2025",
+            "datetime": None,
+        }
 
         result = _generate_meteogram_locations_html()
 
@@ -369,8 +383,9 @@ class TestGenerateMeteogramLocationsHtml:
             "www.google.com/maps/place/51.0,-3.0/@51.0,-3.0,10z/data=!3m1!1e3" in result
         )
 
+    @patch("weather.renderer.get_meteogram_forecast_time")
     @patch("weather.renderer.get_sailing_locations")
-    def test_link_separator(self, mock_get_locations):
+    def test_link_separator(self, mock_get_locations, mock_get_forecast_time):
         """Test that links are separated by a pipe separator."""
         mock_get_locations.return_value = [
             {
@@ -379,9 +394,51 @@ class TestGenerateMeteogramLocationsHtml:
                 "lon": -4.0,
             }
         ]
+        mock_get_forecast_time.return_value = {
+            "base_time": "202508071200",
+            "readable_time": "12:00 UTC on Thu 07 Aug 2025",
+            "datetime": None,
+        }
 
         result = _generate_meteogram_locations_html()
 
         # Check that both links are included (no separator anymore)
         assert "Meteogram →" in result
         assert "Location →" in result
+
+    @patch("weather.renderer.get_meteogram_forecast_time")
+    @patch("weather.renderer.get_sailing_locations")
+    def test_includes_forecast_times_per_location(
+        self, mock_get_locations, mock_get_forecast_time
+    ):
+        """Test that per-location forecast times are included."""
+        mock_get_locations.return_value = [
+            {
+                "name": "Test Location",
+                "lat": 50.0,
+                "lon": -4.0,
+            }
+        ]
+        mock_get_forecast_time.return_value = {
+            "base_time": "202508071200",
+            "readable_time": "12:00 UTC on Thu 07 Aug 2025",
+            "datetime": None,
+        }
+
+        result = _generate_meteogram_locations_html()
+
+        # Check that the location name and forecast time are included at the end
+        assert "Test Location" in result
+        assert "Meteogram →" in result
+        assert "Location →" in result
+        assert "(released at" in result
+        assert "1pm thursday)" in result
+
+        # Check that forecast time appears at the end after the links
+        lines = result.split("\n")
+        # The forecast time should be on its own line at the end
+        forecast_time_line = next(line for line in lines if "(released at" in line)
+        assert forecast_time_line.strip() == "(released at 1pm thursday)"
+
+        # Verify forecast time was fetched for the location
+        mock_get_forecast_time.assert_called_once_with(50.0, -4.0)
