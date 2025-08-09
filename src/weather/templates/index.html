@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Weather Forecast - Sailing Information</title>
+        <title>Weather Aggregator</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -171,49 +171,25 @@
     </head>
     <body>
         <div class="header">
-            <h1>Weather Forecast</h1>
-            <p>Sailing weather information aggregator</p>
+            <h1>Weather Aggregator</h1>
         </div>
 
         <div class="forecast-content">
-            <h2>Met Office Inshore Waters Forecast</h2>
-            <div class="source">
-                Source:
-                <a
-                    href="https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast"
-                    >Met Office Inshore Waters</a
-                >
-            </div>
+            <h2>Inshore waters forecast</h2>
             {forecast_content}
         </div>
 
         <div class="chart-info">
-            <h2>ECMWF Medium-Range Wind Charts</h2>
-            <div class="forecast-date">
-                Latest forecast: {ecmwf_forecast_time}
-            </div>
+            <h2>Synoptic charts</h2>
+            <div class="forecast-date">Released at {ecmwf_forecast_time}</div>
             <div class="source">
-                <a href="{ecmwf_chart_url}" class="chart-link"
-                    >View Wind Charts →</a
-                >
-            </div>
-            <div class="source" style="margin-top: 10px">
-                Source:
-                <a href="https://charts.ecmwf.int/products/medium-wind-10m"
-                    >ECMWF Charts</a
-                >
+                <a href="{ecmwf_chart_url}" class="chart-link">Charts →</a>
             </div>
         </div>
 
         <div class="locations-info">
-            <h2>Location-Specific Meteograms</h2>
+            <h2>Meteograms</h2>
             {meteogram_locations}
-            <div class="source" style="margin-top: 15px">
-                Source:
-                <a href="https://charts.ecmwf.int/products/opencharts_meteogram"
-                    >ECMWF Meteograms</a
-                >
-            </div>
         </div>
 
         <div class="last-updated">Last updated: {last_updated}</div>

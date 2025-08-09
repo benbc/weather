@@ -327,11 +327,11 @@ class TestGenerateMeteogramLocationsHtml:
         assert "Test Location" in result
 
         # Check that meteogram link is included
-        assert "View Meteogram →" in result
+        assert "Meteogram →" in result
         assert "charts.ecmwf.int" in result
 
         # Check that Google Maps link is included with satellite view
-        assert "View Map →" in result
+        assert "Location →" in result
         assert (
             "www.google.com/maps/place/50.0,-4.0/@50.0,-4.0,10z/data=!3m1!1e3" in result
         )
@@ -382,5 +382,5 @@ class TestGenerateMeteogramLocationsHtml:
         result = _generate_meteogram_locations_html(base_time)
 
         # Check that both links are included (no separator anymore)
-        assert "View Meteogram →" in result
-        assert "View Map →" in result
+        assert "Meteogram →" in result
+        assert "Location →" in result

@@ -40,7 +40,7 @@ class TestFunctionalEndToEnd:
 
             # Check that the HTML contains the expected sections
             assert "Lyme Regis to Lands End" in content
-            assert "ECMWF" in content
+            assert "Synoptic charts" in content
             assert "Meteogram" in content
             assert "<html" in content
             assert "</html>" in content
