@@ -1,205 +1,221 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Forecast - Sailing Information</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 15px;
-            line-height: 1.4;
-            font-size: 14px;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .header h1 {
-            margin: 0 0 5px 0;
-            font-size: 1.8em;
-        }
-        .header p {
-            margin: 0;
-            color: #666;
-            font-size: 0.9em;
-        }
-        .forecast-date {
-            font-size: 1.1em;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        .source {
-            font-size: 0.85em;
-            color: #666;
-            margin-top: 5px;
-        }
-        .last-updated {
-            text-align: center;
-            font-size: 0.75em;
-            color: #888;
-            margin-top: 20px;
-        }
-        .forecast-content {
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            border-left: 4px solid #3498db;
-        }
-        .forecast-content h2 {
-            color: #2c3e50;
-            margin: 0 0 8px 0;
-            font-size: 1.4em;
-        }
-        .forecast-content h3 {
-            color: #2c3e50;
-            margin: 15px 0 8px 0;
-            font-size: 1.2em;
-        }
-        .forecast-content h4 {
-            color: #34495e;
-            margin: 12px 0 6px 0;
-            font-size: 1.05em;
-        }
-        .forecast-details {
-            margin: 6px 0 12px 0;
-            color: #34495e;
-            line-height: 1.4;
-        }
-        .forecast-details strong {
-            color: #2c3e50;
-        }
-        .chart-info {
-            background: #f4f4f4;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            border-left: 4px solid #e74c3c;
-        }
-        .chart-info h2 {
-            color: #2c3e50;
-            margin: 0 0 8px 0;
-            font-size: 1.3em;
-        }
-        .chart-link {
-            display: inline-block;
-            background: #e74c3c;
-            color: white;
-            padding: 8px 16px;
-            text-decoration: none;
-            border-radius: 4px;
-            margin-top: 8px;
-            font-size: 0.9em;
-            transition: background-color 0.3s;
-        }
-        .chart-link:hover {
-            background: #c0392b;
-            color: white;
-            text-decoration: none;
-        }
-        .locations-info {
-            background: #f4f4f4;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-            border-left: 4px solid #27ae60;
-        }
-        .locations-info h2 {
-            color: #2c3e50;
-            margin: 0 0 10px 0;
-            font-size: 1.3em;
-        }
-        .location-item {
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
-        .location-name {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-right: 8px;
-        }
-        .meteogram-link, .maps-link {
-            display: inline-block;
-            background: #27ae60;
-            color: white;
-            padding: 4px 8px;
-            text-decoration: none;
-            border-radius: 3px;
-            font-size: 0.8em;
-            margin-right: 6px;
-            transition: background-color 0.3s;
-        }
-        .meteogram-link:hover, .maps-link:hover {
-            background: #229954;
-            color: white;
-            text-decoration: none;
-        }
-        
-        /* Mobile responsiveness */
-        @media (max-width: 768px) {
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Weather Forecast - Sailing Information</title>
+        <style>
             body {
-                padding: 10px;
-                font-size: 13px;
+                font-family: Arial, sans-serif;
+                max-width: 1000px;
+                margin: 0 auto;
+                padding: 15px;
+                line-height: 1.4;
+                font-size: 14px;
+            }
+            .header {
+                text-align: center;
+                margin-bottom: 20px;
             }
             .header h1 {
-                font-size: 1.6em;
+                margin: 0 0 5px 0;
+                font-size: 1.8em;
             }
-            .forecast-content, .chart-info, .locations-info {
-                padding: 12px;
-                margin-bottom: 12px;
+            .header p {
+                margin: 0;
+                color: #666;
+                font-size: 0.9em;
             }
-            .forecast-content h2, .chart-info h2, .locations-info h2 {
-                font-size: 1.2em;
+            .forecast-date {
+                font-size: 1.1em;
+                font-weight: bold;
+                color: #2c3e50;
+            }
+            .source {
+                font-size: 0.85em;
+                color: #666;
+                margin-top: 5px;
+            }
+            .last-updated {
+                text-align: center;
+                font-size: 0.75em;
+                color: #888;
+                margin-top: 20px;
+            }
+            .forecast-content {
+                background: #f9f9f9;
+                padding: 15px;
+                border-radius: 4px;
+                margin-bottom: 15px;
+                border-left: 4px solid #3498db;
+            }
+            .forecast-content h2 {
+                color: #2c3e50;
+                margin: 0 0 8px 0;
+                font-size: 1.4em;
             }
             .forecast-content h3 {
-                font-size: 1.1em;
+                color: #2c3e50;
+                margin: 15px 0 8px 0;
+                font-size: 1.2em;
+            }
+            .forecast-content h4 {
+                color: #34495e;
+                margin: 12px 0 6px 0;
+                font-size: 1.05em;
+            }
+            .forecast-details {
+                margin: 6px 0 12px 0;
+                color: #34495e;
+                line-height: 1.4;
+            }
+            .forecast-details strong {
+                color: #2c3e50;
+            }
+            .chart-info {
+                background: #f4f4f4;
+                padding: 15px;
+                border-radius: 4px;
+                margin-bottom: 15px;
+                border-left: 4px solid #e74c3c;
+            }
+            .chart-info h2 {
+                color: #2c3e50;
+                margin: 0 0 8px 0;
+                font-size: 1.3em;
+            }
+            .chart-link {
+                display: inline-block;
+                background: #e74c3c;
+                color: white;
+                padding: 8px 16px;
+                text-decoration: none;
+                border-radius: 4px;
+                margin-top: 8px;
+                font-size: 0.9em;
+                transition: background-color 0.3s;
+            }
+            .chart-link:hover {
+                background: #c0392b;
+                color: white;
+                text-decoration: none;
+            }
+            .locations-info {
+                background: #f4f4f4;
+                padding: 15px;
+                border-radius: 4px;
+                margin-bottom: 15px;
+                border-left: 4px solid #27ae60;
+            }
+            .locations-info h2 {
+                color: #2c3e50;
+                margin: 0 0 10px 0;
+                font-size: 1.3em;
             }
             .location-item {
                 margin-bottom: 8px;
+                line-height: 1.4;
             }
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>Weather Forecast</h1>
-        <p>Sailing weather information aggregator</p>
-    </div>
-    
-    <div class="forecast-content">
-        <h2>Met Office Inshore Waters Forecast</h2>
-        <div class="source">
-            Source: <a href="https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast">Met Office Inshore Waters</a>
+            .location-name {
+                font-weight: bold;
+                color: #2c3e50;
+                margin-right: 8px;
+            }
+            .meteogram-link,
+            .maps-link {
+                display: inline-block;
+                background: #27ae60;
+                color: white;
+                padding: 4px 8px;
+                text-decoration: none;
+                border-radius: 3px;
+                font-size: 0.8em;
+                margin-right: 6px;
+                transition: background-color 0.3s;
+            }
+            .meteogram-link:hover,
+            .maps-link:hover {
+                background: #229954;
+                color: white;
+                text-decoration: none;
+            }
+
+            /* Mobile responsiveness */
+            @media (max-width: 768px) {
+                body {
+                    padding: 10px;
+                    font-size: 13px;
+                }
+                .header h1 {
+                    font-size: 1.6em;
+                }
+                .forecast-content,
+                .chart-info,
+                .locations-info {
+                    padding: 12px;
+                    margin-bottom: 12px;
+                }
+                .forecast-content h2,
+                .chart-info h2,
+                .locations-info h2 {
+                    font-size: 1.2em;
+                }
+                .forecast-content h3 {
+                    font-size: 1.1em;
+                }
+                .location-item {
+                    margin-bottom: 8px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Weather Forecast</h1>
+            <p>Sailing weather information aggregator</p>
         </div>
-        {forecast_content}
-    </div>
-    
-    <div class="chart-info">
-        <h2>ECMWF Medium-Range Wind Charts</h2>
-        <div class="forecast-date">
-            Latest forecast: {ecmwf_forecast_time}
+
+        <div class="forecast-content">
+            <h2>Met Office Inshore Waters Forecast</h2>
+            <div class="source">
+                Source:
+                <a
+                    href="https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast"
+                    >Met Office Inshore Waters</a
+                >
+            </div>
+            {forecast_content}
         </div>
-        <div class="source">
-            <a href="{ecmwf_chart_url}" class="chart-link">View Wind Charts →</a>
+
+        <div class="chart-info">
+            <h2>ECMWF Medium-Range Wind Charts</h2>
+            <div class="forecast-date">
+                Latest forecast: {ecmwf_forecast_time}
+            </div>
+            <div class="source">
+                <a href="{ecmwf_chart_url}" class="chart-link"
+                    >View Wind Charts →</a
+                >
+            </div>
+            <div class="source" style="margin-top: 10px">
+                Source:
+                <a href="https://charts.ecmwf.int/products/medium-wind-10m"
+                    >ECMWF Charts</a
+                >
+            </div>
         </div>
-        <div class="source" style="margin-top: 10px;">
-            Source: <a href="https://charts.ecmwf.int/products/medium-wind-10m">ECMWF Charts</a>
+
+        <div class="locations-info">
+            <h2>Location-Specific Meteograms</h2>
+            {meteogram_locations}
+            <div class="source" style="margin-top: 15px">
+                Source:
+                <a href="https://charts.ecmwf.int/products/opencharts_meteogram"
+                    >ECMWF Meteograms</a
+                >
+            </div>
         </div>
-    </div>
-    
-    <div class="locations-info">
-        <h2>Location-Specific Meteograms</h2>
-        {meteogram_locations}
-        <div class="source" style="margin-top: 15px;">
-            Source: <a href="https://charts.ecmwf.int/products/opencharts_meteogram">ECMWF Meteograms</a>
-        </div>
-    </div>
-    
-    <div class="last-updated">
-        Last updated: {last_updated}
-    </div>
-</body>
+
+        <div class="last-updated">Last updated: {last_updated}</div>
+    </body>
 </html>
