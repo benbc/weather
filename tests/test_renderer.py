@@ -19,7 +19,8 @@ class TestFormatRelativeDateTime:
         dt_str = "18:00 (UTC) on Wed 7 Aug 2025"
         result = _format_relative_datetime(dt_str, "met_office")
         assert "7pm" in result
-        assert "today" in result or "tomorrow" in result or "yesterday" in result
+        # Date may be relative (today/tomorrow/yesterday) or day name (thursday)
+        assert any(day in result for day in ["today", "tomorrow", "yesterday", "thursday"])
 
     def test_met_office_format_without_time(self):
         """Test Met Office format without time component."""
@@ -32,14 +33,16 @@ class TestFormatRelativeDateTime:
         dt_str = "12:00 UTC on Thu 07 Aug 2025"
         result = _format_relative_datetime(dt_str, "ecmwf")
         assert "1pm" in result
-        assert "today" in result or "tomorrow" in result or "yesterday" in result
+        # Date may be relative (today/tomorrow/yesterday) or day name (thursday)
+        assert any(day in result for day in ["today", "tomorrow", "yesterday", "thursday"])
 
     def test_timestamp_format(self):
         """Test timestamp format parsing."""
         dt_str = "2025-08-07 15:30:44 UTC"
         result = _format_relative_datetime(dt_str, "timestamp")
         assert "4:30pm" in result or "3:30pm" in result
-        assert "today" in result or "tomorrow" in result or "yesterday" in result
+        # Date may be relative (today/tomorrow/yesterday) or day name (thursday)
+        assert any(day in result for day in ["today", "tomorrow", "yesterday", "thursday"])
 
     def test_raises_exception_for_unknown_format(self):
         """Test that exception is raised for unknown source format."""
@@ -225,10 +228,9 @@ class TestGenerateForecastHtml:
 
         assert "<h3>Test Area</h3>" in result
         assert "<h4>From" in result
-        assert "<dt>Wind</dt>" in result
-        assert "<dd>Light winds</dd>" in result
-        assert "<dt>Sea state</dt>" in result
-        assert "<dd>Calm</dd>" in result
+        assert "<strong>Wind</strong>: Light winds<br>" in result
+        assert "<strong>Sea state</strong>: Calm<br>" in result
+        # Three line format uses <br> tags instead of bullet separators
 
 
 class TestRenderHtml:
@@ -357,7 +359,6 @@ class TestGenerateMeteogramLocationsHtml:
         base_time = "202508071200"
         result = _generate_meteogram_locations_html(base_time)
 
-        # Check that the separator is included between links
+        # Check that both links are included (no separator anymore)
         assert "View Meteogram →" in result
-        assert " | " in result
         assert "View Map →" in result

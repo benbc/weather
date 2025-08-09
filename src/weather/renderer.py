@@ -286,22 +286,47 @@ def _generate_forecast_html(forecast_content: dict, forecast_issue_time: str) ->
 
     html_parts = []
 
-    # Add area name
-    html_parts.append(f"<h3>{forecast_content['area_name']}</h3>")
+    # Add area name (remove area number in parentheses)
+    import re
+    area_name = re.sub(r'\s*\(\d+\)$', '', forecast_content['area_name'])
+    html_parts.append(f"<h3>{area_name}</h3>")
 
     # Add each forecast section
     for i, section in enumerate(forecast_content["sections"]):
         formatted_title = _format_forecast_title(
             section["title"], i, forecast_issue_time
         )
+
+        # Build content with specific grouping
         html_parts.append(f"<h4>{formatted_title}</h4>")
-        html_parts.append('<dl class="forecast-details">')
+        html_parts.append('<div class="forecast-details">')
+
+        # Group forecast items into three lines
+        wind_items = []
+        sea_state_items = []
+        weather_visibility_items = []
 
         for item in section["content"]:
-            html_parts.append(f"<dt>{item['category']}</dt>")
-            html_parts.append(f"<dd>{item['description']}</dd>")
+            category = item['category'].lower()
+            formatted_item = (
+                f"<strong>{item['category']}</strong>: {item['description']}"
+            )
+            if 'wind' in category:
+                wind_items.append(formatted_item)
+            elif 'sea' in category or 'state' in category:
+                sea_state_items.append(formatted_item)
+            else:  # Weather, Visibility, etc.
+                weather_visibility_items.append(formatted_item)
 
-        html_parts.append("</dl>")
+        # Add each group as a separate line
+        if wind_items:
+            html_parts.append(" • ".join(wind_items) + "<br>")
+        if sea_state_items:
+            html_parts.append(" • ".join(sea_state_items) + "<br>")
+        if weather_visibility_items:
+            html_parts.append(" • ".join(weather_visibility_items))
+
+        html_parts.append('</div>')
 
     return "\n".join(html_parts)
 
@@ -331,12 +356,11 @@ def _generate_meteogram_locations_html(base_time: str) -> str:
         )
 
         html_parts.append('<div class="location-item">')
-        html_parts.append(f'<span class="location-name">{location["name"]}</span>')
-        html_parts.append("<br>")
+        html_parts.append(f'<span class="location-name">{location["name"]}</span> ')
         html_parts.append(
             f'<a href="{meteogram_url}" class="meteogram-link">View Meteogram →</a>'
         )
-        html_parts.append(" | ")
+        html_parts.append(" ")
         html_parts.append(f'<a href="{maps_url}" class="maps-link">View Map →</a>')
         html_parts.append("</div>")
 

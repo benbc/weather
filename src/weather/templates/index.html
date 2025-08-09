@@ -7,87 +7,92 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
+            padding: 15px;
+            line-height: 1.4;
+            font-size: 14px;
         }
         .header {
             text-align: center;
-            margin-bottom: 30px;
-        }
-        .forecast-info {
-            background: #f4f4f4;
-            padding: 20px;
-            border-radius: 5px;
             margin-bottom: 20px;
         }
+        .header h1 {
+            margin: 0 0 5px 0;
+            font-size: 1.8em;
+        }
+        .header p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9em;
+        }
         .forecast-date {
-            font-size: 1.2em;
+            font-size: 1.1em;
             font-weight: bold;
             color: #2c3e50;
         }
         .source {
-            font-size: 0.9em;
+            font-size: 0.85em;
             color: #666;
-            margin-top: 10px;
+            margin-top: 5px;
         }
         .last-updated {
             text-align: center;
-            font-size: 0.8em;
+            font-size: 0.75em;
             color: #888;
-            margin-top: 30px;
+            margin-top: 20px;
         }
         .forecast-content {
             background: #f9f9f9;
-            padding: 20px;
-            border-radius: 5px;
-            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
             border-left: 4px solid #3498db;
+        }
+        .forecast-content h2 {
+            color: #2c3e50;
+            margin: 0 0 8px 0;
+            font-size: 1.4em;
         }
         .forecast-content h3 {
             color: #2c3e50;
-            margin-top: 0;
-            font-size: 1.3em;
+            margin: 15px 0 8px 0;
+            font-size: 1.2em;
         }
         .forecast-content h4 {
             color: #34495e;
-            margin-top: 20px;
-            margin-bottom: 10px;
-            font-size: 1.1em;
+            margin: 12px 0 6px 0;
+            font-size: 1.05em;
         }
         .forecast-details {
-            margin: 10px 0;
-        }
-        .forecast-details dt {
-            font-weight: bold;
-            color: #2c3e50;
-            margin-top: 10px;
-        }
-        .forecast-details dd {
-            margin-left: 20px;
-            margin-bottom: 8px;
+            margin: 6px 0 12px 0;
             color: #34495e;
+            line-height: 1.4;
+        }
+        .forecast-details strong {
+            color: #2c3e50;
         }
         .chart-info {
             background: #f4f4f4;
-            padding: 20px;
-            border-radius: 5px;
-            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
             border-left: 4px solid #e74c3c;
         }
         .chart-info h2 {
             color: #2c3e50;
-            margin-top: 0;
+            margin: 0 0 8px 0;
+            font-size: 1.3em;
         }
         .chart-link {
             display: inline-block;
             background: #e74c3c;
             color: white;
-            padding: 10px 20px;
+            padding: 8px 16px;
             text-decoration: none;
-            border-radius: 5px;
-            margin-top: 10px;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-size: 0.9em;
             transition: background-color 0.3s;
         }
         .chart-link:hover {
@@ -97,42 +102,64 @@
         }
         .locations-info {
             background: #f4f4f4;
-            padding: 20px;
-            border-radius: 5px;
-            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
             border-left: 4px solid #27ae60;
         }
         .locations-info h2 {
             color: #2c3e50;
-            margin-top: 0;
+            margin: 0 0 10px 0;
+            font-size: 1.3em;
         }
         .location-item {
-            margin-bottom: 15px;
+            margin-bottom: 8px;
+            line-height: 1.4;
         }
         .location-name {
             font-weight: bold;
             color: #2c3e50;
+            margin-right: 8px;
         }
-        .location-description {
-            font-size: 0.9em;
-            color: #666;
-            margin-left: 5px;
-        }
-        .meteogram-link {
+        .meteogram-link, .maps-link {
             display: inline-block;
             background: #27ae60;
             color: white;
-            padding: 8px 16px;
+            padding: 4px 8px;
             text-decoration: none;
-            border-radius: 4px;
-            font-size: 0.9em;
-            margin-top: 5px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-right: 6px;
             transition: background-color 0.3s;
         }
-        .meteogram-link:hover {
+        .meteogram-link:hover, .maps-link:hover {
             background: #229954;
             color: white;
             text-decoration: none;
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                font-size: 13px;
+            }
+            .header h1 {
+                font-size: 1.6em;
+            }
+            .forecast-content, .chart-info, .locations-info {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+            .forecast-content h2, .chart-info h2, .locations-info h2 {
+                font-size: 1.2em;
+            }
+            .forecast-content h3 {
+                font-size: 1.1em;
+            }
+            .location-item {
+                margin-bottom: 8px;
+            }
         }
     </style>
 </head>
@@ -142,17 +169,11 @@
         <p>Sailing weather information aggregator</p>
     </div>
     
-    <div class="forecast-info">
+    <div class="forecast-content">
         <h2>Met Office Inshore Waters Forecast</h2>
-        <div class="forecast-date">
-            Latest forecast: {forecast_date}
-        </div>
         <div class="source">
             Source: <a href="https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast">Met Office Inshore Waters</a>
         </div>
-    </div>
-    
-    <div class="forecast-content">
         {forecast_content}
     </div>
     
@@ -171,9 +192,6 @@
     
     <div class="locations-info">
         <h2>Location-Specific Meteograms</h2>
-        <div class="forecast-date">
-            Forecast: {ecmwf_forecast_time}
-        </div>
         {meteogram_locations}
         <div class="source" style="margin-top: 15px;">
             Source: <a href="https://charts.ecmwf.int/products/opencharts_meteogram">ECMWF Meteograms</a>

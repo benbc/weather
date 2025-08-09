@@ -28,6 +28,7 @@
 - [x] Add a Just command for deploying: pull, push, run the workflow, check it's working
 - [x] Specify locations based on human-friendly description
 - [x] Change the positions
+- [x] Visual redesign
 
 ## Current task
 
