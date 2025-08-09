@@ -1,6 +1,8 @@
 import tempfile
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -129,35 +131,37 @@ class TestFormatRelativeDateTime:
             ]
         )
 
-    def test_tomorrow_formatting(self):
+    @patch("weather.renderer.datetime")
+    def test_tomorrow_formatting(self, mock_datetime):
         """Test that tomorrow dates are formatted correctly."""
-        from datetime import datetime, timedelta
-        from zoneinfo import ZoneInfo
-
-        # Create a date that's exactly tomorrow from London perspective
+        # Mock current time as Aug 8, 2025 12:00 PM London time
         london_tz = ZoneInfo("Europe/London")
-        tomorrow = datetime.now(london_tz) + timedelta(days=1)
+        fixed_now = datetime(2025, 8, 8, 12, 0, 0, tzinfo=london_tz)
 
-        # Format as Met Office string
-        dt_str = tomorrow.astimezone(ZoneInfo("UTC")).strftime(
-            "18:00 (UTC) on %a %d %b %Y"
-        )
+        # Configure the mock to return fixed time for now() but pass through others
+        mock_datetime.now.return_value = fixed_now
+        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+        mock_datetime.strptime = datetime.strptime
+
+        # Test a date that should be "tomorrow" (Aug 9, 2025)
+        dt_str = "18:00 (UTC) on Sat 9 Aug 2025"
         result = _format_relative_datetime(dt_str, "met_office")
         assert "tomorrow" in result
 
-    def test_yesterday_formatting(self):
+    @patch("weather.renderer.datetime")
+    def test_yesterday_formatting(self, mock_datetime):
         """Test that yesterday dates are formatted correctly."""
-        from datetime import datetime, timedelta
-        from zoneinfo import ZoneInfo
-
-        # Create a date that's exactly yesterday from London perspective
+        # Mock current time as Aug 8, 2025 12:00 PM London time
         london_tz = ZoneInfo("Europe/London")
-        yesterday = datetime.now(london_tz) - timedelta(days=1)
+        fixed_now = datetime(2025, 8, 8, 12, 0, 0, tzinfo=london_tz)
 
-        # Format as Met Office string
-        dt_str = yesterday.astimezone(ZoneInfo("UTC")).strftime(
-            "18:00 (UTC) on %a %d %b %Y"
-        )
+        # Configure the mock to return fixed time for now() but pass through others
+        mock_datetime.now.return_value = fixed_now
+        mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
+        mock_datetime.strptime = datetime.strptime
+
+        # Test a date that should be "yesterday" (Aug 7, 2025)
+        dt_str = "18:00 (UTC) on Thu 7 Aug 2025"
         result = _format_relative_datetime(dt_str, "met_office")
         assert "yesterday" in result
 
