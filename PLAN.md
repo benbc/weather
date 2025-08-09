@@ -33,6 +33,8 @@
 - [ ] Fix date-based tests to be deterministic and future-proof by mocking datetime.now() instead of using dynamic date calculations
 - [ ] Modify deploy task so that it waits for the workflow to complete and fails if the workflow fails
 - [ ] Add per-location last forecast dates for meteograms (just brief time and date at the end of the line e.g. "(released at 1am today)")
+- [ ] Add shipping forecast for sea areas Portland and Plymouth (see https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/shipping-forecast)
+- [ ] Modify design: two columns, with forecast detail on left and links to charts etc on right, adaptive so it remains one column on mobile
 
 ## Current task
 
