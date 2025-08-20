@@ -218,6 +218,7 @@ def get_meteogram_forecast_time(lat: float, lon: float) -> dict:
 
     Uses a headless browser to navigate to the meteogram page and extract
     the forecast time from the final URL after JavaScript execution.
+    Includes retry logic for missing base_time parameter with exponential backoff.
 
     Args:
         lat: Latitude in decimal degrees
@@ -229,58 +230,86 @@ def get_meteogram_forecast_time(lat: float, lon: float) -> dict:
 
     Raises:
         Exception: If meteogram request fails or base_time cannot be extracted
+                  after retries
     """
     import re
+    import time
 
     from playwright.sync_api import sync_playwright
 
     meteogram_url = generate_meteogram_url(lat, lon)
+    max_retries = 3
+    base_delay = 2  # Start with 2 seconds
 
-    with sync_playwright() as p:
-        # Launch headless browser
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+    for attempt in range(max_retries + 1):
+        with sync_playwright() as p:
+            # Launch headless browser
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
 
-        try:
-            # Navigate to meteogram page - this will execute JS and handle redirects
-            page.goto(meteogram_url, timeout=30000)  # 30 second timeout
+            try:
+                # Navigate to meteogram page - this will execute JS and handle redirects
+                page.goto(meteogram_url, timeout=30000)  # 30 second timeout
 
-            # Wait a moment for any dynamic content to load
-            page.wait_for_timeout(3000)  # 3 second wait
+                # Wait a moment for any dynamic content to load
+                page.wait_for_timeout(3000)  # 3 second wait
 
-            # Get the final URL after all redirects and JS execution
-            final_url = page.url
+                # Get the final URL after all redirects and JS execution
+                final_url = page.url
 
-        finally:
-            browser.close()
+            except Exception as e:
+                # Let browser/network errors fail immediately (don't retry)
+                browser.close()
+                raise Exception(
+                    f"Browser/network error accessing meteogram: {e}"
+                ) from e
+            else:
+                # Only close in finally if no exception occurred
+                browser.close()
 
-    # Extract base_time from the final URL
-    if "base_time=" not in final_url:
-        raise Exception(
-            f"Meteogram redirect URL does not contain base_time parameter: {final_url}"
-        )
+        # Check if base_time parameter is present
+        if "base_time=" not in final_url:
+            if attempt < max_retries:
+                # Calculate exponential backoff delay: 2s, 4s, 8s
+                delay = base_delay * (2**attempt)
+                print(
+                    f"Missing base_time parameter, retrying in {delay}s "
+                    f"(attempt {attempt + 1}/{max_retries + 1})"
+                )
+                time.sleep(delay)
+                continue
+            else:
+                # Final attempt failed, raise the exception
+                raise Exception(
+                    f"Meteogram redirect URL does not contain base_time parameter "
+                    f"after {max_retries + 1} attempts: {final_url}"
+                )
 
-    match = re.search(r"base_time=(\d{12})", final_url)
-    if not match:
-        raise Exception(f"Could not extract base_time from meteogram URL: {final_url}")
+        # Extract base_time from the final URL
+        match = re.search(r"base_time=(\d{12})", final_url)
+        if not match:
+            # This is a different type of error - fail immediately
+            raise Exception(
+                f"Could not extract base_time from meteogram URL: {final_url}"
+            )
 
-    base_time_str = match.group(1)
+        base_time_str = match.group(1)
 
-    # Parse the base time to create readable format
-    year = int(base_time_str[:4])
-    month = int(base_time_str[4:6])
-    day = int(base_time_str[6:8])
-    hour = int(base_time_str[8:10])
-    minute = int(base_time_str[10:12])
+        # Parse the base time to create readable format
+        year = int(base_time_str[:4])
+        month = int(base_time_str[4:6])
+        day = int(base_time_str[6:8])
+        hour = int(base_time_str[8:10])
+        minute = int(base_time_str[10:12])
 
-    forecast_dt = datetime(year, month, day, hour, minute)
-    readable_time = forecast_dt.strftime("%H:%M UTC on %a %d %b %Y")
+        forecast_dt = datetime(year, month, day, hour, minute)
+        readable_time = forecast_dt.strftime("%H:%M UTC on %a %d %b %Y")
 
-    return {
-        "base_time": base_time_str,
-        "readable_time": readable_time,
-        "datetime": forecast_dt,
-    }
+        return {
+            "base_time": base_time_str,
+            "readable_time": readable_time,
+            "datetime": forecast_dt,
+        }
 
 
 def get_shipping_forecast_period(url: str) -> str:

@@ -38,6 +38,8 @@
 - [x] Modify design: two columns, with forecast detail on left and links to charts etc on right, adaptive so it remains one column on mobile
 - [x] Change styling for all forecast dates so they are not bold or larger letters and don't have colons at the end
 - [x] Remove the bullet points in the weather/visibility lines
+- [x] Investigate workflow failures and report on cause and possible fixes
+- [x] Implement retry logic for ECMWF meteogram base_time parameter failures
 
 ## Current task
 
@@ -46,3 +48,42 @@
 ### Approach
 
 ### Checklist
+
+## Investigation Report: Workflow Failures
+
+**Failure Pattern:**
+- 2 failed workflow runs found in recent history:
+  - Run 17090835255 (2025-08-20T06:49:38Z)
+  - Run 17087074109 (2025-08-20T02:44:03Z)
+- Both failures occur during the "Generate weather forecast HTML" step
+- All other recent runs (10+) are successful
+
+**Root Cause:**
+The failure occurs in `get_meteogram_forecast_time()` function in `src/weather/scraper.py:259`
+
+**Error Details:**
+```
+Exception: Meteogram redirect URL does not contain base_time parameter: https://charts.ecmwf.int/products/opencharts_meteogram?epsgram=classical_15d&lat=49.92&lon=-5.2
+```
+
+**Technical Analysis:**
+1. The function expects ECMWF meteogram URLs to redirect to URLs containing a `base_time` parameter
+2. When the ECMWF site doesn't include this parameter (likely due to service issues or changes), the function fails
+3. This is a brittle dependency on external service behavior
+4. The workflow runs every 10 minutes, so temporary ECMWF issues cause failures
+
+**Proposed Fixes:**
+
+1. **Immediate Fix (Graceful Degradation):**
+   - Add error handling to catch this specific case
+   - Fall back to a default time or skip meteogram times when ECMWF fails
+   - Log the issue but don't fail the entire workflow
+
+2. **Robust Fix (Retry Logic):**
+   - Implement retry logic with backoff for ECMWF requests
+   - Add timeout and error handling for network issues
+   - Consider caching previous successful results as fallback
+
+3. **Monitoring Fix:**
+   - Add logging to track ECMWF service reliability
+   - Consider alerting on repeated failures vs single failures

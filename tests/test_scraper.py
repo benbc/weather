@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 
 import pytest
 import requests
@@ -428,11 +428,12 @@ class TestGetMeteogramForecastTime:
         mock_page.goto.assert_called_once()
         mock_browser.close.assert_called_once()
 
+    @patch("time.sleep")  # Mock sleep to speed up test
     @patch("playwright.sync_api.sync_playwright")
     def test_raises_exception_when_no_base_time_in_meteogram_redirect(
-        self, mock_playwright
+        self, mock_playwright, mock_sleep
     ):
-        """Test exception when meteogram redirect URL lacks base_time."""
+        """Test exception when meteogram redirect URL lacks base_time after retries."""
         # Mock the Playwright chain
         mock_p = mock_playwright.return_value.__enter__.return_value
         mock_browser = mock_p.chromium.launch.return_value
@@ -441,9 +442,13 @@ class TestGetMeteogramForecastTime:
 
         with pytest.raises(
             Exception,
-            match="Meteogram redirect URL does not contain base_time parameter",
+            match="Meteogram redirect URL does not contain base_time parameter "
+            "after 4 attempts",
         ):
             get_meteogram_forecast_time(50.23, -3.47)
+
+        # Verify retries happened (3 sleeps for 4 total attempts)
+        assert mock_sleep.call_count == 3
 
     @patch("playwright.sync_api.sync_playwright")
     def test_raises_exception_when_meteogram_base_time_malformed(self, mock_playwright):
@@ -471,6 +476,56 @@ class TestGetMeteogramForecastTime:
         get_meteogram_forecast_time(50.23, -3.47)
 
         # Verify browser cleanup
+        mock_browser.close.assert_called_once()
+
+    @patch("time.sleep")  # Mock sleep to speed up test
+    @patch("playwright.sync_api.sync_playwright")
+    def test_retry_succeeds_after_initial_failure(self, mock_playwright, mock_sleep):
+        """Test that retry mechanism works when base_time appears on retry."""
+        # Track how many times we've accessed the URL property
+        url_call_count = 0
+
+        def url_side_effect():
+            nonlocal url_call_count
+            url_call_count += 1
+            if url_call_count == 1:
+                return "https://charts.ecmwf.int/products/opencharts_meteogram?epsgram=classical_15d&lat=50.23&lon=-3.47"
+            else:
+                return "https://charts.ecmwf.int/products/opencharts_meteogram?base_time=202508071200&epsgram=classical_15d&lat=50.23&lon=-3.47"
+
+        # Mock the Playwright chain
+        mock_p = mock_playwright.return_value.__enter__.return_value
+        mock_browser = mock_p.chromium.launch.return_value
+        mock_page = mock_browser.new_page.return_value
+
+        # Mock URL property with side effect function
+        type(mock_page).url = PropertyMock(side_effect=url_side_effect)
+
+        result = get_meteogram_forecast_time(50.23, -3.47)
+
+        # Verify it succeeded
+        assert result["base_time"] == "202508071200"
+        # Verify one retry happened (1 sleep for 2 total attempts)
+        assert mock_sleep.call_count == 1
+        # Verify exponential backoff delay (first retry is 2 seconds)
+        mock_sleep.assert_called_with(2)
+
+    @patch("playwright.sync_api.sync_playwright")
+    def test_browser_error_fails_immediately(self, mock_playwright):
+        """Test that browser errors fail immediately without retry."""
+        # Mock the Playwright chain to raise an exception
+        mock_p = mock_playwright.return_value.__enter__.return_value
+        mock_browser = mock_p.chromium.launch.return_value
+        mock_page = mock_browser.new_page.return_value
+        mock_page.goto.side_effect = Exception("Network timeout")
+
+        with pytest.raises(
+            Exception,
+            match="Browser/network error accessing meteogram: Network timeout",
+        ):
+            get_meteogram_forecast_time(50.23, -3.47)
+
+        # Verify browser cleanup happened even with error
         mock_browser.close.assert_called_once()
 
 
