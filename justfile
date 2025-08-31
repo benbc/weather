@@ -6,27 +6,20 @@ render:
 dev-render:
     uv run python -m src.weather.dev_renderer
 
-# Run tests
-test:
+# Verify code quality and tests (read-only checks)
+verify:
+    uv run ruff check .
     uv run pytest
 
-# Check code formatting and linting
-lint:
-    uv run ruff check .
-
-# Format code with ruff
-format:
+# Fix code formatting and linting issues, then verify
+fix:
     uv run ruff format .
-
-# Fix auto-fixable linting issues
-lint-fix:
     uv run ruff check --fix .
+    just verify
 
 # Pre-commit checks (format, lint, tests with coverage)
 pre-commit:
-    uv run ruff format .
-    uv run ruff check .
-    uv run pytest
+    just verify
 
 # Verify current sailing locations against actual ECMWF coordinates
 verify-locations:
