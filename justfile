@@ -25,7 +25,7 @@ verify-locations:
 find-location description:
     uv run python -m src.weather.location_cli "{{description}}"
 
-# Deploy: pull, push, run workflow, and wait for completion
+# Deploy: pull, push, run workflow, wait for completion, and show logs if there are problems
 deploy:
     @echo "🚀 Starting deployment process..."
     @echo "📥 Pulling latest changes..."
@@ -37,18 +37,15 @@ deploy:
     @echo "⏳ Waiting for workflow to start..."
     sleep 10
     @echo "👀 Watching workflow until completion..."
-    gh run watch --exit-status --compact $(gh run list --workflow="Update Weather Forecast" --limit=1 --json databaseId --jq '.[0].databaseId')
-    @echo "✅ Deployment completed successfully!"
-
-# Check the status of the latest deployment
-check-deployment:
-    @echo "📊 Latest deployment status:"
-    gh run list --workflow="Update Weather Forecast" --limit=3
-    @echo ""
-    @echo "🔍 Detailed view of latest run:"
-    gh run view $(gh run list --workflow="Update Weather Forecast" --limit=1 --json databaseId --jq '.[0].databaseId')
-
-# View logs of the latest deployment
-deployment-logs:
-    @echo "📜 Viewing logs from latest deployment..."
-    gh run view $(gh run list --workflow="Update Weather Forecast" --limit=1 --json databaseId --jq '.[0].databaseId') --log
+    @if gh run watch --exit-status --compact $(gh run list --workflow="Update Weather Forecast" --limit=1 --json databaseId --jq '.[0].databaseId'); then \
+        echo "✅ Deployment completed successfully!"; \
+    else \
+        echo "❌ Deployment failed!"; \
+        echo ""; \
+        echo "📊 Deployment status:"; \
+        gh run list --workflow="Update Weather Forecast" --limit=3; \
+        echo ""; \
+        echo "📜 Deployment logs:"; \
+        gh run view $(gh run list --workflow="Update Weather Forecast" --limit=1 --json databaseId --jq '.[0].databaseId') --log; \
+        exit 1; \
+    fi
