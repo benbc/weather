@@ -28,9 +28,13 @@ pre-commit:
     uv run ruff check .
     uv run pytest
 
-# Verify current sailing locations against actual ECMWF coordinates  
+# Verify current sailing locations against actual ECMWF coordinates
 verify-locations:
     uv run python src/weather/location_tools.py
+
+# Find sailing locations from human-friendly descriptions
+find-location description:
+    uv run python -m src.weather.location_cli "{{description}}"
 
 # Deploy: pull, push, run workflow, and wait for completion
 deploy:
@@ -59,7 +63,3 @@ check-deployment:
 deployment-logs:
     @echo "📜 Viewing logs from latest deployment..."
     gh run view $(gh run list --workflow="Update Weather Forecast" --limit=1 --json databaseId --jq '.[0].databaseId') --log
-
-# Find sailing locations from human-friendly descriptions
-find-location description:
-    uv run python -m src.weather.location_cli "{{description}}"
