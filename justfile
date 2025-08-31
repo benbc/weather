@@ -17,14 +17,6 @@ fix:
     uv run ruff check --fix .
     just verify
 
-# Verify current sailing locations against actual ECMWF coordinates
-verify-locations:
-    uv run python src/weather/location_tools.py
-
-# Find sailing locations from human-friendly descriptions
-find-location description:
-    uv run python -m src.weather.location_cli "{{description}}"
-
 # Deploy: pull, push, run workflow, wait for completion, and show logs if there are problems
 deploy:
     @echo "🚀 Starting deployment process..."
