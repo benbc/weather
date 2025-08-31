@@ -17,10 +17,6 @@ fix:
     uv run ruff check --fix .
     just verify
 
-# Pre-commit checks (format, lint, tests with coverage)
-pre-commit:
-    just verify
-
 # Verify current sailing locations against actual ECMWF coordinates
 verify-locations:
     uv run python src/weather/location_tools.py
