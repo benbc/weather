@@ -27,6 +27,8 @@ omit = [
     "*/location_tools.py",
     "*/location_optimizer.py",
     "*/location_finder.py",
+    "*/dev_renderer.py",
+    "*/location_cli.py",
 ]
 
 [tool.coverage.report]

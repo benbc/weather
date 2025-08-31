@@ -4,7 +4,7 @@ render:
 
 # Generate the weather HTML page for local development
 dev-render:
-    uv run python -c "from src.weather.renderer import render_html; render_html('src/weather/templates/index.html', 'output/index.html')"
+    uv run python -m src.weather.dev_renderer
 
 # Run tests
 test:
@@ -62,5 +62,4 @@ deployment-logs:
 
 # Find sailing locations from human-friendly descriptions
 find-location description:
-    @echo "🔍 Searching for sea points matching: {{description}}"
-    uv run python -c "from src.weather.location_finder import find_location_from_description; results = find_location_from_description('{{description}}'); print(f'Found {len(results)} sea points'); [print(f'  {i+1}. {r.suggested_description} - ECMWF: {r.actual_ecmwf_coords[0]:.3f}°N, {abs(r.actual_ecmwf_coords[1]):.3f}°W') for i, r in enumerate(results[:5])]"
+    uv run python -m src.weather.location_cli "{{description}}"

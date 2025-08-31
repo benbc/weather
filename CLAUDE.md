@@ -16,7 +16,7 @@ Since this is a maritime application, all distances should be given in nautical 
 * The plan for development is described in PLAN.md
 * Pick items to work on from the Tasks list
 * When picking up a new task, describe the goal and your approach in the Current task section
-* Maintain a checklist when working on a task
+* Maintain a checklist when working on a task and check things off as you go
 * Run `just dev-render` so the human can do manual verification easily
 * when the person instructing you agrees that a task is complete:
   * remove current task details from plan (but not the document structure)
