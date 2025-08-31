@@ -218,9 +218,7 @@ def verify_current_locations() -> list[LocationResult]:
         print(f"Checking {location['name']}...")
 
         # Generate meteogram URL
-        meteogram_url = generate_meteogram_url(
-            location["lat"], location["lon"], ecmwf_data["base_time"]
-        )
+        meteogram_url = generate_meteogram_url(location["lat"], location["lon"])
         print(f"URL: {meteogram_url}")
 
         try:

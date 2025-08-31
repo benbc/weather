@@ -360,20 +360,3 @@ def find_location_from_description(description: str) -> list[SeaPointResult]:
     landmark_name, target_distance = parsed
 
     return search_for_sea_point(landmark_name, target_distance)
-
-
-if __name__ == "__main__":
-    # Example usage
-    print("Location Finder - Example Usage")
-
-    # Test parsing
-    test_descriptions = [
-        "2M off Dartmouth",
-        "3 miles south of Plymouth",
-        "1M off Lizard Point",
-    ]
-
-    print("\n=== PARSING TESTS ===")
-    for desc in test_descriptions:
-        result = parse_location_description(desc)
-        print(f"'{desc}' → {result}")

@@ -262,9 +262,3 @@ def print_optimization_summary(
         f"   Offset from original intent: {best.distance_from_target:.2f}km "
         f"({best_distance_nm:.1f}M)"
     )
-
-
-if __name__ == "__main__":
-    # Example usage
-    print("Grid search optimization tool")
-    print("Use 'just optimize-location' command for interactive optimization")
