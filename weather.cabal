@@ -1,0 +1,22 @@
+cabal-version: 3.8
+name: weather
+version:0.1.0.0
+license: NONE
+author: Ben Butler-Cole
+maintainer: ben.butlercole@gmail.com
+build-type: Simple
+
+executable weather
+    main-is: Main.hs
+    build-depends:
+        base ^>=4.21.0.0,
+        polysemy ^>=1.9.2.0,
+        polysemy-plugin,
+        http-client,
+        http-client-tls,
+        http-types,
+        bytestring,
+        containers
+    hs-source-dirs: app
+    default-language: GHC2021
+    ghc-options: -Wall -Werror -fplugin=Polysemy.Plugin -O2 -flate-specialise -fspecialise-aggressively
