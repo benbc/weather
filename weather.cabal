@@ -10,7 +10,8 @@ executable weather
     main-is: Main.hs
     other-modules:
         Effects.Curl,
-        Polysemy.Error.Extended
+        Polysemy.Error.Extended,
+        Polysemy.Reader.Extended
     build-depends:
         base ^>=4.21.0.0,
         polysemy ^>=1.9.2.0,

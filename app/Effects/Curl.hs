@@ -16,7 +16,8 @@ import Network.HTTP.Types.Status (status200)
 import Polysemy (Embed, Member, Sem, embed, interpret, send)
 import Polysemy.Error.Extended (Error)
 import qualified Polysemy.Error.Extended as Error
-import Polysemy.Reader (Reader, ask)
+import Polysemy.Reader.Extended (Reader)
+import qualified Polysemy.Reader.Extended as Reader
 
 data Curl m a where
     Curl :: String -> Curl m ByteString
@@ -35,7 +36,7 @@ runToIOError = interpret \case
 runToReaderError :: (Member (Reader (Map String ByteString)) r, Member (Error String) r) => Sem (Curl ': r) a -> Sem r a
 runToReaderError = interpret \case
     Curl url -> do
-        websites <- ask
+        websites <- Reader.ask
         Error.note "no such page" $ Map.lookup url websites
 
 fetch :: String -> IO (Response ByteString)
