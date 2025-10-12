@@ -3,6 +3,7 @@
 
 module Main where
 
+import Control.Arrow ((>>>))
 import Data.ByteString.Lazy (ByteString)
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -29,10 +30,10 @@ program = do
     return ()
 
 runAll :: Sem [Trace, Curl, Error String, Embed IO] a -> IO a
-runAll = runM . Error.runToIO . Curl.runToIOError . Trace.runToIO
+runAll = Trace.runToIO >>> Curl.runToIOError >>> Error.runToIO >>> runM
 
 runPure :: Map String ByteString -> Sem [Trace, Curl, Reader (Map String ByteString), Error String] a -> Either String ([String], a)
-runPure websites = run . Error.runToEither . Reader.run websites . Curl.runToReaderError . Trace.runToList
+runPure websites = Trace.runToList >>> Curl.runToReaderError >>> Reader.run websites >>> Error.runToEither >>> run
 
 main :: IO ()
 main = do
