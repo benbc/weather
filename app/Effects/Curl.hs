@@ -14,7 +14,7 @@ import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.HTTP.Types.Status (status200)
 
 import Polysemy (Embed, Member, Sem, embed, interpret, send)
-import Polysemy.Error (Error, note, throw)
+import Polysemy.Error.Extended (Error, note, throw)
 import Polysemy.Reader (Reader, ask)
 
 data Curl m a where

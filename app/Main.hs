@@ -8,18 +8,11 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 
 import Polysemy (Embed, Member, Sem, run, runM)
-import Polysemy.Error (Error, runError)
+import Polysemy.Error.Extended (Error, errorToIOError, runError)
 import Polysemy.Reader (Reader, runReader)
 import Polysemy.Trace (Trace, runTraceList, trace, traceToStderr)
 
 import Effects.Curl (Curl, curl, curlFromMap, curlToIO)
-
-errorToIOError :: Sem (Error String ': r) a -> Sem r a
-errorToIOError sem = do
-    result <- runError sem
-    case result of
-        Left err -> error err
-        Right val -> return val
 
 inshoreWatersUrl :: String
 inshoreWatersUrl = "https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast"
