@@ -14,7 +14,8 @@ import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Network.HTTP.Types.Status (status200)
 
 import Polysemy (Embed, Member, Sem, embed, interpret, send)
-import Polysemy.Error.Extended (Error, note, throw)
+import Polysemy.Error.Extended (Error)
+import qualified Polysemy.Error.Extended as Error
 import Polysemy.Reader (Reader, ask)
 
 data Curl m a where
@@ -29,13 +30,13 @@ runToIOError = interpret \case
         resp <- embed $ fetch url
         case responseStatus resp of
             s | s == status200 -> return $ responseBody resp
-            s -> throw $ show s
+            s -> Error.throw $ show s
 
 runToReaderError :: (Member (Reader (Map String ByteString)) r, Member (Error String) r) => Sem (Curl ': r) a -> Sem r a
 runToReaderError = interpret \case
     Curl url -> do
         websites <- ask
-        note "no such page" $ Map.lookup url websites
+        Error.note "no such page" $ Map.lookup url websites
 
 fetch :: String -> IO (Response ByteString)
 fetch url = do

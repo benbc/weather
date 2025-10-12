@@ -8,7 +8,8 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 
 import Polysemy (Embed, Member, Sem, run, runM)
-import Polysemy.Error.Extended (Error, errorToIOError, runError)
+import Polysemy.Error.Extended (Error)
+import qualified Polysemy.Error.Extended as Error
 import Polysemy.Reader (Reader, runReader)
 import Polysemy.Trace (Trace, runTraceList, trace, traceToStderr)
 
@@ -26,10 +27,10 @@ program = do
     return ()
 
 runAll :: Sem [Trace, Curl, Error String, Embed IO] a -> IO a
-runAll = runM . errorToIOError . Curl.runToIOError . traceToStderr
+runAll = runM . Error.runToIO . Curl.runToIOError . traceToStderr
 
 runPure :: Map String ByteString -> Sem [Trace, Curl, Reader (Map String ByteString), Error String] a -> Either String ([String], a)
-runPure websites = run . runError . runReader websites . Curl.runToReaderError . runTraceList
+runPure websites = run . Error.runToEither . runReader websites . Curl.runToReaderError . runTraceList
 
 main :: IO ()
 main = do
