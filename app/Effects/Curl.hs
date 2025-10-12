@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Effects.Curl (Curl, curl, curlFromMap, curlToIO) where
+module Effects.Curl (Curl, curl, runToReaderError, runToIOError) where
 
 import Data.ByteString.Lazy (ByteString)
 import Data.Map (Map)
@@ -23,16 +23,16 @@ data Curl m a where
 curl :: (Member Curl r) => String -> Sem r ByteString
 curl url = send (Curl url :: Curl (Sem r) ByteString)
 
-curlToIO :: (Member (Embed IO) r, Member (Error String) r) => Sem (Curl ': r) a -> Sem r a
-curlToIO = interpret \case
+runToIOError :: (Member (Embed IO) r, Member (Error String) r) => Sem (Curl ': r) a -> Sem r a
+runToIOError = interpret \case
     Curl url -> do
         resp <- embed $ fetch url
         case responseStatus resp of
             s | s == status200 -> return $ responseBody resp
             s -> throw $ show s
 
-curlFromMap :: (Member (Reader (Map String ByteString)) r, Member (Error String) r) => Sem (Curl ': r) a -> Sem r a
-curlFromMap = interpret \case
+runToReaderError :: (Member (Reader (Map String ByteString)) r, Member (Error String) r) => Sem (Curl ': r) a -> Sem r a
+runToReaderError = interpret \case
     Curl url -> do
         websites <- ask
         note "no such page" $ Map.lookup url websites

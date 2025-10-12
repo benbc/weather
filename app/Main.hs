@@ -12,7 +12,8 @@ import Polysemy.Error.Extended (Error, errorToIOError, runError)
 import Polysemy.Reader (Reader, runReader)
 import Polysemy.Trace (Trace, runTraceList, trace, traceToStderr)
 
-import Effects.Curl (Curl, curl, curlFromMap, curlToIO)
+import Effects.Curl (Curl, curl)
+import qualified Effects.Curl as Curl
 
 inshoreWatersUrl :: String
 inshoreWatersUrl = "https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast"
@@ -25,10 +26,10 @@ program = do
     return ()
 
 runAll :: Sem [Trace, Curl, Error String, Embed IO] a -> IO a
-runAll = runM . errorToIOError . curlToIO . traceToStderr
+runAll = runM . errorToIOError . Curl.runToIOError . traceToStderr
 
 runPure :: Map String ByteString -> Sem [Trace, Curl, Reader (Map String ByteString), Error String] a -> Either String ([String], a)
-runPure websites = run . runError . runReader websites . curlFromMap . runTraceList
+runPure websites = run . runError . runReader websites . Curl.runToReaderError . runTraceList
 
 main :: IO ()
 main = do
