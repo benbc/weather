@@ -8,6 +8,8 @@ build-type: Simple
 
 executable weather
     main-is: Main.hs
+    other-modules:
+        Effects.Curl
     build-depends:
         base ^>=4.21.0.0,
         polysemy ^>=1.9.2.0,

@@ -1,0 +1,45 @@
+{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
+
+module Effects.Curl (Curl, curl, curlFromMap, curlToIO) where
+
+import Data.ByteString.Lazy (ByteString)
+import Data.Map (Map)
+import qualified Data.Map as Map
+
+import Network.HTTP.Client (Response, httpLbs, newManager, parseRequest, requestHeaders, responseBody, responseStatus)
+import Network.HTTP.Client.TLS (tlsManagerSettings)
+import Network.HTTP.Types.Status (status200)
+
+import Polysemy (Embed, Member, Sem, embed, interpret, send)
+import Polysemy.Error (Error, note, throw)
+import Polysemy.Reader (Reader, ask)
+
+data Curl m a where
+    Curl :: String -> Curl m ByteString
+
+curl :: (Member Curl r) => String -> Sem r ByteString
+curl url = send (Curl url :: Curl (Sem r) ByteString)
+
+curlToIO :: (Member (Embed IO) r, Member (Error String) r) => Sem (Curl ': r) a -> Sem r a
+curlToIO = interpret \case
+    Curl url -> do
+        resp <- embed $ fetch url
+        case responseStatus resp of
+            s | s == status200 -> return $ responseBody resp
+            s -> throw $ show s
+
+curlFromMap :: (Member (Reader (Map String ByteString)) r, Member (Error String) r) => Sem (Curl ': r) a -> Sem r a
+curlFromMap = interpret \case
+    Curl url -> do
+        websites <- ask
+        note "no such page" $ Map.lookup url websites
+
+fetch :: String -> IO (Response ByteString)
+fetch url = do
+    req <- parseRequest url
+    let req' = req{requestHeaders = [("User-Agent", "fishsticks")]}
+    man <- newManager tlsManagerSettings
+    httpLbs req' man
