@@ -11,7 +11,8 @@ executable weather
     other-modules:
         Effects.Curl,
         Polysemy.Error.Extended,
-        Polysemy.Reader.Extended
+        Polysemy.Reader.Extended,
+        Polysemy.Trace.Extended
     build-depends:
         base ^>=4.21.0.0,
         polysemy ^>=1.9.2.0,
