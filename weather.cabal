@@ -10,6 +10,7 @@ executable weather
     main-is: Main.hs
     other-modules:
         Effects.Curl,
+        Forecast,
         Polysemy.Error.Extended,
         Polysemy.Reader.Extended,
         Polysemy.Trace.Extended

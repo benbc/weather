@@ -20,17 +20,14 @@ import qualified Polysemy.Trace.Extended as Trace
 import Effects.Curl (Curl, curl)
 import qualified Effects.Curl as Curl
 
-import Text.HTML.Scalpel
-
-inshoreWatersUrl :: String
-inshoreWatersUrl = "https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast"
+import qualified Forecast
 
 program :: (Member Trace r, Member Curl r, Member (Error String) r) => Sem r ()
 program = do
     trace "Starting"
-    page <- curl inshoreWatersUrl
+    page <- curl Forecast.inshoreWatersUrl
     -- TODO: cleaner handling of different string types -- maybe use TagSoup's Text.StringLike? c.f. Scalpel's decoders
-    let forecast = scrapeStringLike (unpack page) forecastScraper
+    let forecast = Forecast.parse (unpack page)
     forecast' <- Error.note "couldn't parse forecast" forecast
     trace forecast'
     return ()
@@ -48,10 +45,10 @@ main = do
         Left err -> putStrLn $ "Error: " ++ err
         Right (traces, ()) -> putStrLn $ show traces
   where
-    websites = Map.fromList [(inshoreWatersUrl, "<div id='inshore-waters-areas'><section aria-labelledby='area8'>some forecast</section></div>")]
-
-forecastScraper :: Scraper String String
-forecastScraper = text $ areas // area8
-  where
-    areas = "div" @: ["id" @= "inshore-waters-areas"]
-    area8 = "section" @: ["aria-labelledby" @= "area8"]
+    websites =
+        Map.fromList
+            [
+                ( Forecast.inshoreWatersUrl
+                , "<div id='inshore-waters-areas'><section aria-labelledby='area8'>some forecast</section></div>"
+                )
+            ]
