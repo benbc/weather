@@ -8,7 +8,6 @@ import Data.ByteString.Lazy (ByteString)
 import Data.ByteString.Lazy.Char8 (unpack)
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Data.Maybe
 
 import Polysemy (Embed, Member, Sem, run, runM)
 import Polysemy.Error.Extended (Error)
@@ -26,13 +25,14 @@ import Text.HTML.Scalpel
 inshoreWatersUrl :: String
 inshoreWatersUrl = "https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast"
 
-program :: (Member Trace r, Member Curl r) => Sem r ()
+program :: (Member Trace r, Member Curl r, Member (Error String) r) => Sem r ()
 program = do
     trace "Starting"
     page <- curl inshoreWatersUrl
     -- TODO: cleaner handling of different string types -- maybe use TagSoup's Text.StringLike? c.f. Scalpel's decoders
     let forecast = scrapeStringLike (unpack page) forecastScraper
-    trace $ fromJust forecast
+    forecast' <- Error.note "couldn't parse forecast" forecast
+    trace forecast'
     return ()
 
 runAll :: Sem [Trace, Curl, Error String, Embed IO] a -> IO a
