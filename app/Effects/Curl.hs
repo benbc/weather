@@ -6,6 +6,7 @@
 module Effects.Curl (Curl, curl, runToReaderError, runToIOError) where
 
 import Data.ByteString.Lazy (ByteString)
+import qualified Data.ByteString.Lazy.Char8 as Char8
 import Data.Map (Map)
 import qualified Data.Map as Map
 
@@ -20,20 +21,21 @@ import Polysemy.Reader.Extended (Reader)
 import qualified Polysemy.Reader.Extended as Reader
 
 data Curl m a where
-    Curl :: String -> Curl m ByteString
+    Curl :: String -> Curl m String
 
-curl :: (Member Curl r) => String -> Sem r ByteString
-curl url = send (Curl url :: Curl (Sem r) ByteString)
+curl :: (Member Curl r) => String -> Sem r String
+curl url = send (Curl url :: Curl (Sem r) String)
 
 runToIOError :: (Member (Embed IO) r, Member (Error String) r) => Sem (Curl ': r) a -> Sem r a
 runToIOError = interpret \case
     Curl url -> do
         resp <- embed $ fetch url
+        -- TOOD: can we replace this case with a guarded failure?
         case responseStatus resp of
-            s | s == status200 -> return $ responseBody resp
+            s | s == status200 -> return $ Char8.unpack $ responseBody resp
             s -> Error.throw $ show s
 
-runToReaderError :: (Member (Reader (Map String ByteString)) r, Member (Error String) r) => Sem (Curl ': r) a -> Sem r a
+runToReaderError :: (Member (Reader (Map String String)) r, Member (Error String) r) => Sem (Curl ': r) a -> Sem r a
 runToReaderError = interpret \case
     Curl url -> do
         websites <- Reader.ask

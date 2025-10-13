@@ -1,11 +1,8 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
 import Control.Arrow ((>>>))
-import Data.ByteString.Lazy (ByteString)
-import Data.ByteString.Lazy.Char8 (unpack)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
@@ -26,8 +23,7 @@ program :: (Member Trace r, Member Curl r, Member (Error String) r) => Sem r ()
 program = do
     trace "Starting"
     page <- curl Forecast.inshoreWatersUrl
-    -- TODO: cleaner handling of different string types -- maybe use TagSoup's Text.StringLike? c.f. Scalpel's decoders
-    let forecast = Forecast.parse (unpack page)
+    let forecast = Forecast.parse page
     forecast' <- Error.note "couldn't parse forecast" forecast
     trace forecast'
     return ()
@@ -35,7 +31,7 @@ program = do
 runAll :: Sem [Trace, Curl, Error String, Embed IO] a -> IO a
 runAll = Trace.runToIO >>> Curl.runToIOError >>> Error.runToIO >>> runM
 
-runPure :: Map String ByteString -> Sem [Trace, Curl, Reader (Map String ByteString), Error String] a -> Either String ([String], a)
+runPure :: Map String String -> Sem [Trace, Curl, Reader (Map String String), Error String] a -> Either String ([String], a)
 runPure websites = Trace.runToList >>> Curl.runToReaderError >>> Reader.run websites >>> Error.runToEither >>> run
 
 main :: IO ()
