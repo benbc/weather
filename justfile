@@ -1,3 +1,9 @@
+run:
+    cabal run weather
+
+test:
+    cabal test
+
 # Generate the weather HTML page (for deployment)
 render:
     uv run python -m src.weather.renderer

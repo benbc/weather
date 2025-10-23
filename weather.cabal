@@ -6,14 +6,14 @@ author: Ben Butler-Cole
 maintainer: ben.butlercole@gmail.com
 build-type: Simple
 
-executable weather
-    main-is: Main.hs
-    other-modules:
+library
+    exposed-modules:
         Effects.Curl,
         Forecast,
         Polysemy.Error.Extended,
         Polysemy.Reader.Extended,
-        Polysemy.Trace.Extended
+        Polysemy.Trace.Extended,
+        Program
     build-depends:
         base ^>=4.21.0.0,
         polysemy ^>=1.9.2.0,
@@ -24,6 +24,33 @@ executable weather
         bytestring,
         containers,
         scalpel
+    hs-source-dirs: src
+    default-language: GHC2021
+    ghc-options: -Wall -Werror -fplugin=Polysemy.Plugin -O2 -flate-specialise -fspecialise-aggressively
+
+executable weather
+    main-is: Main.hs
+    build-depends:
+        base ^>=4.21.0.0,
+        weather,
+        polysemy ^>=1.9.2.0,
+        polysemy-plugin,
+        containers
     hs-source-dirs: app
     default-language: GHC2021
     ghc-options: -Wall -Werror -fplugin=Polysemy.Plugin -O2 -flate-specialise -fspecialise-aggressively
+
+test-suite spec
+    type: exitcode-stdio-1.0
+    main-is: Spec.hs
+    hs-source-dirs:
+        test
+    ghc-options: -Wall -Werror
+    build-depends:
+        base,
+        hspec,
+        weather
+    other-modules:
+        ForecastSpec
+    default-language: GHC2021
+    build-tool-depends: hspec-discover:hspec-discover
