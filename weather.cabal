@@ -32,13 +32,10 @@ executable weather
     main-is: Main.hs
     build-depends:
         base ^>=4.21.0.0,
-        weather,
-        polysemy ^>=1.9.2.0,
-        polysemy-plugin,
-        containers
+        weather
     hs-source-dirs: app
     default-language: GHC2021
-    ghc-options: -Wall -Werror -fplugin=Polysemy.Plugin -O2 -flate-specialise -fspecialise-aggressively
+    ghc-options: -Wall -Werror
 
 test-suite spec
     type: exitcode-stdio-1.0
@@ -49,8 +46,10 @@ test-suite spec
     build-depends:
         base,
         hspec,
-        weather
+        weather,
+        containers
     other-modules:
-        ForecastSpec
+        ForecastSpec,
+        MainSpec
     default-language: GHC2021
     build-tool-depends: hspec-discover:hspec-discover
