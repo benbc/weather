@@ -1,6 +1,4 @@
 /.claude/settings.local.json
-__pycache__/
 /output/
-/.coverage
 /tmp/
 /dist-newstyle/
