@@ -15,8 +15,8 @@ library
         Polysemy.Trace.Extended,
         Program
     build-depends:
-        base ^>=4.21.0.0,
-        polysemy ^>=1.9.2.0,
+        base,
+        polysemy,
         polysemy-plugin,
         http-client,
         http-client-tls,
@@ -31,7 +31,7 @@ library
 executable weather
     main-is: Main.hs
     build-depends:
-        base ^>=4.21.0.0,
+        base,
         weather
     hs-source-dirs: app
     default-language: GHC2021
