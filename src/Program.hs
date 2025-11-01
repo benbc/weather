@@ -24,7 +24,7 @@ program = do
     page <- curl Forecast.inshoreWatersUrl
     let forecast = Forecast.parse page
     forecast' <- Error.note "couldn't parse forecast" forecast
-    trace forecast'
+    trace $ show forecast'
     return ()
 
 runAll :: Sem [Trace, Curl, Error String, Embed IO] a -> IO a
