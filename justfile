@@ -1,8 +1,13 @@
 run:
     cabal run weather
 
-test:
-    cabal test
+test match="":
+    #!/bin/bash -e
+    if [ -n "{{match}}" ]; then
+        cabal test --test-options="--match {{match}}"
+    else
+        cabal test
+    fi
 
 # Deploy: pull, push, run workflow, wait for completion, and show logs if there are problems
 deploy:
