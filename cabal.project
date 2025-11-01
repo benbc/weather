@@ -1,0 +1,7 @@
+packages: weather.cabal
+allow-newer:
+  -- polysemy (1.9.2) and cabal.doctest (1.0.11) are constrained to Cabal (<3.16),
+  -- but we require Cabal (3.16) for compatibility with GHC 9.12-supporting hie-bios.
+  polysemy:Cabal,
+  polysemy-plugin:Cabal,
+  cabal-doctest:Cabal
