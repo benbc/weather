@@ -9,6 +9,11 @@ test match="":
         cabal test
     fi
 
+verify:
+    cabal build
+    cabal test
+    cabal run weather
+
 # Deploy: pull, push, run workflow, wait for completion, and show logs if there are problems
 deploy:
     @echo "🚀 Starting deployment process..."
