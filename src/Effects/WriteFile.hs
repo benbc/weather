@@ -1,7 +1,5 @@
 {-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE LambdaCase #-}
 
 module Effects.WriteFile (WriteFile, writeFile, runToIO, runToList) where
 
