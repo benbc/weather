@@ -8,6 +8,7 @@ build-type: Simple
 
 library
     exposed-modules:
+        Display,
         Effects.Curl,
         Effects.WriteFile,
         Forecast,
