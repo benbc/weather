@@ -85,10 +85,10 @@ program = do
     writeFile "output/index.html" (formatHtml forecast')
     trace "Finished"
 
-runAll :: Sem [Trace, WriteFile, Curl, Error String, Embed IO] a -> IO a
+runAll :: Sem [Trace, WriteFile, Curl, Error String, Embed IO] () -> IO ()
 runAll = Trace.runToIO >>> WriteFile.runToIO >>> Curl.runToIOError >>> Error.runToIO >>> runM
 
-runPure :: Map String String -> Sem [Trace, WriteFile, Curl, Reader (Map String String), Error String] a -> Either String ([String], a)
+runPure :: Map String String -> Sem [Trace, WriteFile, Curl, Reader (Map String String), Error String] () -> Either String [String]
 runPure websites =
     Trace.ignore
         >>> WriteFile.runToList
@@ -96,3 +96,4 @@ runPure websites =
         >>> Reader.run websites
         >>> Error.runToEither
         >>> run
+        >>> fmap fst

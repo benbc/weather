@@ -1,4 +1,3 @@
-Typed "outputs" for pure runners of trace and writefile effects
-Maybe use writer directly instead of interpreting trace/writeFile to lists?
+Typed "output" for pure runner of writefile effect
+Maybe use writer directly instead of interpreting writeFile to list?
 Maybe run full thing as a test?
-Remove unused output value from runPure

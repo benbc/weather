@@ -14,7 +14,7 @@ spec = do
     describe "running in-memory" $ do
         it "writes the forecast to an html file" $ do
             runPure websites program
-                `shouldSatisfy` right (zipP (elemsAre [startsWith "output/index.html:" `andP` hasSubstr "Lyme Regis to Lands End"]) anything)
+                `shouldSatisfy` right (elemsAre [startsWith "output/index.html:" `andP` hasSubstr "Lyme Regis to Lands End"])
   where
     websites = Map.fromList [(Forecast.inshoreWatersUrl, realisticHtml)]
     realisticHtml =
