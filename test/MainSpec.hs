@@ -15,11 +15,7 @@ spec = do
         it "runs the program with test data" $ do
             case runPure websites program of
                 Left err -> expectationFailure $ "Error: " ++ err
-                Right (traces, fileWrites, ()) -> do
-                    traces
-                        `shouldBe` [ "Starting"
-                                   , "AreaForecast {areaName = \"Lyme Regis to Lands End including the Isles of Scilly (8)\", current24Hours = ForecastPeriod {wind = \"West or southwest 5 to 7, occasionally 4 at first and gale 8 later.\", sea = \"Moderate or rough in east, rough or very rough in west.\", weather = \"Showers, squally or thundery at times.\", visibility = \"Moderate or good, occasionally poor.\"}, next24Hours = ForecastPeriod {wind = \"West backing southwest 5 or 6, occasionally 4 at first and 7 later.\", sea = \"Moderate or rough, occasionally very rough near the Isles of Scilly.\", weather = \"Showers.\", visibility = \"Good, occasionally moderate.\"}}"
-                                   ]
+                Right (fileWrites, ()) -> do
                     case fileWrites of
                         [write] -> do
                             write `shouldSatisfy` \w ->

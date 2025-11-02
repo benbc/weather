@@ -78,21 +78,21 @@ program :: (Member Trace r, Member WriteFile r, Member Curl r, Member (Error Str
 program = do
     trace "Starting"
     page <- curl Forecast.inshoreWatersUrl
+    trace "Got forecast"
     let forecast = Forecast.parse page
     forecast' <- Error.note "couldn't parse forecast" forecast
-    trace $ show forecast'
+    trace "Parsed forecast"
     writeFile "output/index.html" (formatHtml forecast')
-    return ()
+    trace "Finished"
 
 runAll :: Sem [Trace, WriteFile, Curl, Error String, Embed IO] a -> IO a
 runAll = Trace.runToIO >>> WriteFile.runToIO >>> Curl.runToIOError >>> Error.runToIO >>> runM
 
-runPure :: Map String String -> Sem [Trace, WriteFile, Curl, Reader (Map String String), Error String] a -> Either String ([String], [String], a)
+runPure :: Map String String -> Sem [Trace, WriteFile, Curl, Reader (Map String String), Error String] a -> Either String ([String], a)
 runPure websites =
-    Trace.runToList
+    Trace.ignore
         >>> WriteFile.runToList
         >>> Curl.runToReaderError
         >>> Reader.run websites
         >>> Error.runToEither
         >>> run
-        >>> fmap (\(fileWrites, (traces, result)) -> (traces, fileWrites, result))
