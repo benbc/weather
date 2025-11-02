@@ -1,4 +1,4 @@
 Typed "outputs" for pure runners of trace and writefile effects
 Maybe use writer directly instead of interpreting trace/writeFile to lists?
-Make the integration test less horrid
 Maybe run full thing as a test?
+Remove unused output value from runPure

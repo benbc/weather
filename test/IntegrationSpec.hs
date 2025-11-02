@@ -1,35 +1,22 @@
 {-# LANGUAGE MultilineStrings #-}
 
-module MainSpec where
+module IntegrationSpec where
 
-import Data.List qualified
 import Data.Map qualified as Map
-import Test.Hspec
+import Test.Hspec hiding (shouldSatisfy)
+import Test.Predicates
+import Test.Predicates.HUnit (shouldSatisfy)
 
 import Forecast qualified
 import Program
 
-spec :: Spec
 spec = do
-    describe "integration test" $ do
-        it "runs the program with test data" $ do
-            case runPure websites program of
-                Left err -> expectationFailure $ "Error: " ++ err
-                Right (fileWrites, ()) -> do
-                    case fileWrites of
-                        [write] -> do
-                            write `shouldSatisfy` \w ->
-                                "output/index.html:" `Data.List.isPrefixOf` w
-                                    && "Lyme Regis to Lands End including the Isles of Scilly (8)" `Data.List.isInfixOf` w
-                        _ -> expectationFailure $ "Expected exactly 1 file write, got: " ++ show (length fileWrites)
+    describe "running in-memory" $ do
+        it "writes the forecast to an html file" $ do
+            runPure websites program
+                `shouldSatisfy` right (zipP (elemsAre [startsWith "output/index.html:" `andP` hasSubstr "Lyme Regis to Lands End"]) anything)
   where
-    websites =
-        Map.fromList
-            [
-                ( Forecast.inshoreWatersUrl
-                , realisticHtml
-                )
-            ]
+    websites = Map.fromList [(Forecast.inshoreWatersUrl, realisticHtml)]
     realisticHtml =
         """
         <div id='inshore-waters-areas'>

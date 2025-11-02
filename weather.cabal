@@ -48,11 +48,12 @@ test-suite spec
     ghc-options: -Wall -Werror -Wno-missing-signatures
     build-depends:
         base,
+        explainable-predicates==0.1.2.4,
         hspec,
         weather,
         containers
     other-modules:
         ForecastSpec,
-        MainSpec
+        IntegrationSpec
     default-language: GHC2021
     build-tool-depends: hspec-discover:hspec-discover
