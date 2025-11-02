@@ -88,7 +88,7 @@ program = do
 runAll :: Sem [Trace, WriteFile, Curl, Error String, Embed IO] () -> IO ()
 runAll = Trace.runToIO >>> WriteFile.runToIO >>> Curl.runToIOError >>> Error.runToIO >>> runM
 
-runPure :: Map String String -> Sem [Trace, WriteFile, Curl, Reader (Map String String), Error String] () -> Either String [String]
+runPure :: Map String String -> Sem [Trace, WriteFile, Curl, Reader (Map String String), Error String] () -> Either String [(FilePath, String)]
 runPure websites =
     Trace.ignore
         >>> WriteFile.runToList

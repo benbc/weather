@@ -21,7 +21,7 @@ runToIO = interpret \(WriteFile path content) -> embed do
     createDirectoryIfMissing True (takeDirectory path)
     Prelude.writeFile path content
 
-runToList :: Sem (WriteFile ': r) a -> Sem r ([String], a)
+runToList :: Sem (WriteFile ': r) a -> Sem r ([(FilePath, String)], a)
 runToList =
     Writer.runWriter . reinterpret \(WriteFile path content) ->
-        Writer.tell [path ++ ": " ++ content]
+        Writer.tell [(path, content)]

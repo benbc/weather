@@ -1,3 +1,1 @@
-Typed "output" for pure runner of writefile effect
-Maybe use writer directly instead of interpreting writeFile to list?
 Maybe run full thing as a test?
