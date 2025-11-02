@@ -2,10 +2,11 @@
 
 module MainSpec where
 
-import qualified Data.Map as Map
+import Data.List qualified
+import Data.Map qualified as Map
 import Test.Hspec
 
-import qualified Forecast
+import Forecast qualified
 import Program
 
 spec :: Spec
@@ -14,10 +15,17 @@ spec = do
         it "runs the program with test data" $ do
             case runPure websites program of
                 Left err -> expectationFailure $ "Error: " ++ err
-                Right (traces, ()) -> traces `shouldBe`
-                    [ "Starting"
-                    , "AreaForecast {areaName = \"Lyme Regis to Lands End including the Isles of Scilly (8)\", current24Hours = ForecastPeriod {wind = \"West or southwest 5 to 7, occasionally 4 at first and gale 8 later.\", sea = \"Moderate or rough in east, rough or very rough in west.\", weather = \"Showers, squally or thundery at times.\", visibility = \"Moderate or good, occasionally poor.\"}, next24Hours = ForecastPeriod {wind = \"West backing southwest 5 or 6, occasionally 4 at first and 7 later.\", sea = \"Moderate or rough, occasionally very rough near the Isles of Scilly.\", weather = \"Showers.\", visibility = \"Good, occasionally moderate.\"}}"
-                    ]
+                Right (traces, fileWrites, ()) -> do
+                    traces
+                        `shouldBe` [ "Starting"
+                                   , "AreaForecast {areaName = \"Lyme Regis to Lands End including the Isles of Scilly (8)\", current24Hours = ForecastPeriod {wind = \"West or southwest 5 to 7, occasionally 4 at first and gale 8 later.\", sea = \"Moderate or rough in east, rough or very rough in west.\", weather = \"Showers, squally or thundery at times.\", visibility = \"Moderate or good, occasionally poor.\"}, next24Hours = ForecastPeriod {wind = \"West backing southwest 5 or 6, occasionally 4 at first and 7 later.\", sea = \"Moderate or rough, occasionally very rough near the Isles of Scilly.\", weather = \"Showers.\", visibility = \"Good, occasionally moderate.\"}}"
+                                   ]
+                    case fileWrites of
+                        [write] -> do
+                            write `shouldSatisfy` \w ->
+                                "output/index.html:" `Data.List.isPrefixOf` w
+                                    && "Lyme Regis to Lands End including the Isles of Scilly (8)" `Data.List.isInfixOf` w
+                        _ -> expectationFailure $ "Expected exactly 1 file write, got: " ++ show (length fileWrites)
   where
     websites =
         Map.fromList

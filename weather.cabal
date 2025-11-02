@@ -9,6 +9,7 @@ build-type: Simple
 library
     exposed-modules:
         Effects.Curl,
+        Effects.WriteFile,
         Forecast,
         Polysemy.Error.Extended,
         Polysemy.Reader.Extended,
@@ -23,7 +24,9 @@ library
         http-types,
         bytestring,
         containers,
-        scalpel
+        scalpel,
+        directory,
+        filepath
     hs-source-dirs: src
     default-language: GHC2021
     ghc-options: -Wall -Werror -fplugin=Polysemy.Plugin -O2 -flate-specialise -fspecialise-aggressively

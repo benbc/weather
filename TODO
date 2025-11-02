@@ -1,0 +1,4 @@
+Typed "outputs" for pure runners of trace and writefile effects
+Maybe use writer directly instead of interpreting trace/writeFile to lists?
+Can single-case case statements be replaced with patterns in arg to lambdas?
+Make the integration test less horrid
