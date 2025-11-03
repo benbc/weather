@@ -14,7 +14,6 @@ library
         Forecast,
         Polysemy.Error.Extended,
         Polysemy.Reader.Extended,
-        Polysemy.Trace.Extended,
         Program
     build-depends:
         base,
