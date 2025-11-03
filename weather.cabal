@@ -27,7 +27,10 @@ library
         containers,
         scalpel,
         directory,
-        filepath
+        filepath,
+        mustache,
+        aeson,
+        text
     hs-source-dirs: src
     default-language: GHC2021
     ghc-options: -Wall -Werror -fplugin=Polysemy.Plugin -O2 -flate-specialise -fspecialise-aggressively

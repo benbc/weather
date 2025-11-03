@@ -1,7 +1,9 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Forecast (inshoreWatersUrl, parse, AreaForecast (..), ForecastPeriod (..)) where
 
+import GHC.Generics (Generic)
 import Text.HTML.Scalpel
 
 data ForecastPeriod = ForecastPeriod
@@ -10,14 +12,14 @@ data ForecastPeriod = ForecastPeriod
     , weather :: String
     , visibility :: String
     }
-    deriving (Show, Eq)
+    deriving (Show, Eq, Generic)
 
 data AreaForecast = AreaForecast
     { areaName :: String
     , current24Hours :: ForecastPeriod
     , next24Hours :: ForecastPeriod
     }
-    deriving (Show, Eq)
+    deriving (Show, Eq, Generic)
 
 inshoreWatersUrl :: String
 inshoreWatersUrl = "https://weather.metoffice.gov.uk/specialist-forecasts/coast-and-sea/inshore-waters-forecast"

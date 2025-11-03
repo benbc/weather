@@ -1,7 +1,7 @@
-module Polysemy.Error.Extended (Error, runToEither, runToIO, note, throw) where
+module Polysemy.Error.Extended (Error, fromEither, runToEither, runToIO, note, throw) where
 
 import Polysemy (Sem)
-import Polysemy.Error (Error, note, runError, throw)
+import Polysemy.Error (Error, fromEither, note, runError, throw)
 
 runToIO :: Sem (Error String ': r) a -> Sem r a
 runToIO sem = do

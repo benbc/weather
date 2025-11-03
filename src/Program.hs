@@ -27,10 +27,10 @@ program = do
     trace "Starting"
     page <- curl Forecast.inshoreWatersUrl
     trace "Got forecast"
-    let forecast = Forecast.parse page
-    forecast' <- Error.note "couldn't parse forecast" forecast
+    forecast <- Error.note "couldn't parse forecast" $ Forecast.parse page
     trace "Parsed forecast"
-    writeFile "output/index.html" (Display.formatHtml forecast')
+    output <- Error.fromEither $ Display.formatHtml forecast
+    writeFile "output/index.html" output
     trace "Finished"
 
 runAll :: Sem [Trace, WriteFile, Curl, Error String, Embed IO] () -> IO ()
