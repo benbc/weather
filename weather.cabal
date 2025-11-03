@@ -54,7 +54,9 @@ test-suite spec
         explainable-predicates==0.1.2.4,
         hspec,
         weather,
-        containers
+        containers,
+        directory,
+        temporary
     other-modules:
         ForecastSpec,
         IntegrationSpec
