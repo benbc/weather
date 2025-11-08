@@ -25,7 +25,7 @@ program = do
     page <- curl Forecast.inshoreWatersUrl
     forecast <- Error.note "couldn't parse forecast" $ Forecast.parse page
     output <- Error.fromEither $ Display.formatHtml forecast
-    writeFile "output/index.html" output
+    writeFile "../docs/new/index.html" output
 
 runAll :: Sem [WriteFile, Curl, Error String, Embed IO] () -> IO ()
 runAll = WriteFile.runToIO >>> Curl.runToIOError >>> Error.runToIO >>> runM

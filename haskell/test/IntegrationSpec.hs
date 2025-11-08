@@ -16,17 +16,17 @@ spec = do
     describe "running in-memory" $ do
         it "writes the forecast to an html file" $ do
             runPure websites program
-                `shouldSatisfy` right (elemsAre [zipP (eq "output/index.html") (hasSubstr "Lyme Regis to Lands End")])
+                `shouldSatisfy` right (elemsAre [zipP (eq "../docs/new/index.html") (hasSubstr "Lyme Regis to Lands End")])
 
     describe "running for real" $ do
         around_ inTempDir $ do
             it "writes the forecast to an html file" $ do
                 runAll program
 
-                fileExists <- doesFileExist "output/index.html"
+                fileExists <- doesFileExist "../docs/new/index.html"
                 fileExists `shouldBe` True
 
-                content <- readFile "output/index.html"
+                content <- readFile "../docs/new/index.html"
                 content `shouldSatisfy` (hasSubstr "<!DOCTYPE html>" `andP` hasSubstr "Lyme Regis to Lands End")
 
 inTempDir action = withSystemTempDirectory "weather-test" $ \dir -> withCurrentDirectory dir action
