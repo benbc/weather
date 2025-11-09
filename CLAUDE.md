@@ -7,6 +7,16 @@ It's customised for my use (my preferences, sailing area etc).
 It exists to save me time, so I don't have to check multiple sources of information
 and so that I can see when updates are available.
 
+The `python` directory contains an old version of the system developed in Python
+(currently the "production" version).
+The `haskell` directory contains a new version which is under development.
+When the new version is complete the old one will be deleted
+and the new one promoted to "production".
+
+There are some more details in README.md.
+
+### General requirements
+
 Since this is a maritime application, all distances should be given in nautical miles
 (abbreviation M).
 
@@ -17,12 +27,7 @@ Since this is a maritime application, all distances should be given in nautical 
 * Pick items to work on from the Tasks list
 * When picking up a new task, describe the goal and your approach in the Current task section
 * Maintain a checklist when working on a task and check things off as you go
-* Run `just dev-render` so the human can do manual verification easily
-* when the person instructing you agrees that a task is complete:
-  * remove current task details from plan (but not the document structure)
-  * check off task
-  * commit changes and deploy
-* don't move on to the next task without instruction
+* When a task is complete, present to the human for feedback -- do not commit to git yourself
 
 ## Code style
 
@@ -34,7 +39,8 @@ Since this is a maritime application, all distances should be given in nautical 
 ### Stack
 
 * Deployed using GH workflows and pages
-* Python rendering static HTML
+* Haskell rendering static HTML
+* All side-effects described by Polysemy effects system
 
 ### Operations
 
@@ -44,4 +50,8 @@ Since this is a maritime application, all distances should be given in nautical 
 ### DevEx
 
 * All operations defined in a Justfile
-* Use uv for managing Python environment
+* Use cabal for managing Python environment
+
+Use these commands rather than calling `cabal` directly:
+* `just verify`
+* `just run`

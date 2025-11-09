@@ -16,3 +16,6 @@ and enforce full code coverage.
 The tests themselves are very low quality, of course,
 but my impression is that the extra feedback loops helped.
 I also got it to add an end-to-end test and automate deployment to reduce the checking burden on me.
+
+The original version was written in Python and now lives in the `python` directory.
+There is a new hand-coded version under development, written in Haskell, in the `haskell` directory.
