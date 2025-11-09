@@ -58,7 +58,7 @@ jobs:
 
       - name: Commit and push if changed
         run: |
-          git add docs/
+          git add --force docs/
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
