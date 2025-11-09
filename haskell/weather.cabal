@@ -1,0 +1,64 @@
+cabal-version: 3.8
+name: weather
+version:0.1.0.0
+license: NONE
+author: Ben Butler-Cole
+maintainer: ben.butlercole@gmail.com
+build-type: Simple
+
+library
+    exposed-modules:
+        Display,
+        Effects.Curl,
+        Effects.WriteFile,
+        Forecast,
+        Polysemy.Error.Extended,
+        Polysemy.Reader.Extended,
+        Program
+    build-depends:
+        base,
+        polysemy,
+        polysemy-plugin,
+        http-client,
+        http-client-tls,
+        http-types,
+        bytestring,
+        containers,
+        scalpel,
+        directory,
+        filepath,
+        mustache,
+        aeson,
+        text
+    hs-source-dirs: src
+    default-language: GHC2021
+    ghc-options: -Wall -Werror -fplugin=Polysemy.Plugin -O2 -flate-specialise -fspecialise-aggressively
+
+executable weather
+    main-is: Main.hs
+    build-depends:
+        base,
+        weather
+    hs-source-dirs: app
+    default-language: GHC2021
+    ghc-options: -Wall -Werror
+
+test-suite spec
+    type: exitcode-stdio-1.0
+    main-is: Spec.hs
+    hs-source-dirs:
+        test
+    ghc-options: -Wall -Werror -Wno-missing-signatures
+    build-depends:
+        base,
+        explainable-predicates==0.1.2.4,
+        hspec,
+        weather,
+        containers,
+        directory,
+        temporary
+    other-modules:
+        ForecastSpec,
+        IntegrationSpec
+    default-language: GHC2021
+    build-tool-depends: hspec-discover:hspec-discover
