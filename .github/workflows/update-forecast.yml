@@ -30,12 +30,15 @@ jobs:
       uses: extractions/setup-just@v2
       
     - name: Install dependencies
+      working-directory: python
       run: uv sync
-      
+
     - name: Install Playwright browsers
+      working-directory: python
       run: uv run playwright install chromium
-      
+
     - name: Generate weather forecast HTML
+      working-directory: python
       run: just render
       
     - name: Configure git

@@ -547,6 +547,6 @@ def render_html(
 if __name__ == "__main__":
     # Default paths
     template_path = "src/weather/templates/index.html"
-    output_path = "docs/index.html"
+    output_path = "../docs/index.html"
 
     render_html(template_path, output_path)
