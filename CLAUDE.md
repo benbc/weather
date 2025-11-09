@@ -50,8 +50,6 @@ Since this is a maritime application, all distances should be given in nautical 
 ### DevEx
 
 * All operations defined in a Justfile
-* Use cabal for managing Python environment
+* Use cabal for managing Haskell environment and uv for Python
 
-Use these commands rather than calling `cabal` directly:
-* `just verify`
-* `just run`
+Use `just` commands rather than calling `uv` or `cabal` directly.

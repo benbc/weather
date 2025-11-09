@@ -29,6 +29,12 @@ jobs:
       - name: Install just
         uses: extractions/setup-just@v2
 
+      - name: Set up Haskell
+        uses: haskell-actions/setup@v2
+        with:
+          ghc-version: "9.12.2"
+          cabal-version: "latest"
+
       - name: Install dependencies
         working-directory: python
         run: uv sync
@@ -37,9 +43,13 @@ jobs:
         working-directory: python
         run: uv run playwright install chromium
 
-      - name: Generate weather forecast HTML
+      - name: Generate weather forecast HTML (Python)
         working-directory: python
         run: just render
+
+      - name: Generate weather forecast HTML (Haskell)
+        working-directory: haskell
+        run: just run
 
       - name: Configure git
         run: |
