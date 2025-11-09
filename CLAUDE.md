@@ -27,6 +27,7 @@ Since this is a maritime application, all distances should be given in nautical 
 * Pick items to work on from the Tasks list
 * When picking up a new task, describe the goal and your approach in the Current task section
 * Maintain a checklist when working on a task and check things off as you go
+* Test the code you've written using the appropriate `just` command
 * When a task is complete, present to the human for feedback -- do not commit to git yourself
 
 ## Code style
