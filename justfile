@@ -20,7 +20,7 @@ deploy:
     just verify
 
     OLD_PYTHON_TIMESTAMP="$(timestamp https://benbc.github.io/weather/)"
-    OLD_HASKELL_TIMESTAMP="$(timestamp https://benbc.github.io/weather/new/)"
+    OLD_HASKELL_TIMESTAMP="$(timestamp https://benbc.github.io/weather/new/ || echo "")"
 
     git push
 
