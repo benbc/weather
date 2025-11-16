@@ -12,14 +12,15 @@ deploy:
     }
 
     timestamp() {
-        curl --silent https://benbc.github.io/weather/ | grep --only-matching --perl-regexp 'Last updated: \K[^<]+'
+        curl --silent "$1" | grep --only-matching --perl-regexp 'Last updated: \K[^<]+'
     }
 
     [[ "$(git branch --show-current)" == "main" ]] || error "Not on main branch"
 
     just verify
 
-    OLD_TIMESTAMP="$(timestamp)"
+    OLD_PYTHON_TIMESTAMP="$(timestamp https://benbc.github.io/weather/)"
+    OLD_HASKELL_TIMESTAMP="$(timestamp https://benbc.github.io/weather/new/)"
 
     git push
 
@@ -40,10 +41,13 @@ deploy:
 
     gh run watch --exit-status "$RUN_ID"
 
-    NEW_TIMESTAMP="$(timestamp)"
+    NEW_PYTHON_TIMESTAMP="$(timestamp https://benbc.github.io/weather/)"
+    NEW_HASKELL_TIMESTAMP="$(timestamp https://benbc.github.io/weather/new/)"
 
-    if [[ "$NEW_TIMESTAMP" != "$OLD_TIMESTAMP" ]]; then
+    if [[ "$NEW_PYTHON_TIMESTAMP" != "$OLD_PYTHON_TIMESTAMP" ]] && [[ "$NEW_HASKELL_TIMESTAMP" != "$OLD_HASKELL_TIMESTAMP" ]]; then
         echo >&2 "Deployment successful"
     else
-        error "Page timestamp unchanged"
+        [[ "$NEW_PYTHON_TIMESTAMP" == "$OLD_PYTHON_TIMESTAMP" ]] && echo >&2 "Python page timestamp unchanged"
+        [[ "$NEW_HASKELL_TIMESTAMP" == "$OLD_HASKELL_TIMESTAMP" ]] && echo >&2 "Haskell page timestamp unchanged"
+        error "Page timestamp(s) unchanged"
     fi

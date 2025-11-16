@@ -3,6 +3,8 @@
 module IntegrationSpec where
 
 import Data.Map qualified as Map
+import Data.Time.Calendar.OrdinalDate (fromOrdinalDate)
+import Data.Time.Clock (UTCTime (UTCTime), secondsToDiffTime)
 import System.Directory (doesFileExist, withCurrentDirectory)
 import System.IO.Temp (withSystemTempDirectory)
 import Test.Hspec hiding (shouldSatisfy)
@@ -15,7 +17,7 @@ import Program
 spec = do
     describe "running in-memory" $ do
         it "writes the forecast to an html file" $ do
-            runPure websites program
+            runPure fixedTime websites program
                 `shouldSatisfy` right (elemsAre [zipP (eq "../out/new/index.html") (hasSubstr "Lyme Regis to Lands End")])
 
     describe "running for real" $ do
@@ -30,6 +32,9 @@ spec = do
                 content `shouldSatisfy` (hasSubstr "<!DOCTYPE html>" `andP` hasSubstr "Lyme Regis to Lands End")
 
 inTempDir action = withSystemTempDirectory "weather-test" $ \dir -> withCurrentDirectory dir action
+
+fixedTime :: UTCTime
+fixedTime = UTCTime (fromOrdinalDate 0 1) (secondsToDiffTime 0)
 
 websites = Map.fromList [(Forecast.inshoreWatersUrl, realisticHtml)]
 realisticHtml =

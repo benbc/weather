@@ -10,6 +10,7 @@ library
     exposed-modules:
         Display,
         Effects.Curl,
+        Effects.GetTime,
         Effects.WriteFile,
         Forecast,
         Polysemy.Error.Extended,
@@ -29,7 +30,8 @@ library
         filepath,
         mustache,
         aeson,
-        text
+        text,
+        time
     hs-source-dirs: src
     default-language: GHC2021
     ghc-options: -Wall -Werror -fplugin=Polysemy.Plugin -O2 -flate-specialise -fspecialise-aggressively
@@ -56,7 +58,8 @@ test-suite spec
         weather,
         containers,
         directory,
-        temporary
+        temporary,
+        time
     other-modules:
         ForecastSpec,
         IntegrationSpec
