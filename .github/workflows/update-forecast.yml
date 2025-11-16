@@ -4,8 +4,14 @@ on:
   schedule:
     # Run every ten minutes
     - cron: "*/10 * * * *"
-  # Allow manual trigger
+  # Allow manual trigger (see `just deploy` for use of the input)
   workflow_dispatch:
+    inputs:
+      run_tag:
+        description: "Unique tag for tracking this run"
+        required: false
+
+run-name: Update Weather Forecast${{ inputs.run_tag && format(' [TAG:{0}]', inputs.run_tag) || '' }}
 
 permissions:
   contents: read
