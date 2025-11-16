@@ -10,9 +10,9 @@
 - [x] Make just commands uniform for the two versions (including remove dev-render)
 - [x] Add `just verify` at top level that tests both versions
 - [x] Add last update time to Haskell page (and check in `just deploy`)
-- [ ] separate python/haskell updates into two different jobs (can they run in parallel?)
+- [x] separate python/haskell updates into two different jobs (can they run in parallel?)
 - [ ] Add equivalent of ruff check/format for Haskell
-- [ ] Format Haskell output like Python output
+- [ ] Style Haskell output so it looks roughly like Python output
 - [ ] Get Zed integration working
 
 ## Current task
