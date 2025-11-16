@@ -1,3 +1,7 @@
+verify:
+    just haskell/verify
+    just python/verify
+
 deploy:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -13,8 +17,7 @@ deploy:
 
     [[ "$(git branch --show-current)" == "main" ]] || error "Not on main branch"
 
-    (cd python && just verify)
-    (cd haskell && just verify)
+    just verify
 
     OLD_TIMESTAMP="$(timestamp)"
 
