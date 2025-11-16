@@ -58,7 +58,7 @@ jobs:
 
       - name: Generate weather forecast HTML (Python)
         working-directory: python
-        run: just render
+        run: just run
 
       - name: Generate weather forecast HTML (Haskell)
         working-directory: haskell
