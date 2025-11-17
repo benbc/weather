@@ -12,9 +12,8 @@
 - [x] Add last update time to Haskell page (and check in `just deploy`)
 - [x] separate python/haskell updates into two different jobs (can they run in parallel?)
 - [x] caching for Haskell build intermediates
-- [ ] caching for Python build intermediates
+- [x] Get Zed integration working
 - [ ] Add equivalent of ruff check/format for Haskell
 - [ ] Style Haskell output so it looks roughly like Python output
-- [ ] Get Zed integration working
 
 ## Current task
