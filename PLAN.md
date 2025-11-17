@@ -11,6 +11,8 @@
 - [x] Add `just verify` at top level that tests both versions
 - [x] Add last update time to Haskell page (and check in `just deploy`)
 - [x] separate python/haskell updates into two different jobs (can they run in parallel?)
+- [x] caching for Haskell build intermediates
+- [ ] caching for Python build intermediates
 - [ ] Add equivalent of ruff check/format for Haskell
 - [ ] Style Haskell output so it looks roughly like Python output
 - [ ] Get Zed integration working

@@ -77,6 +77,15 @@ jobs:
       - name: Install just
         uses: extractions/setup-just@v2
 
+      - name: Cache build intermediates
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cabal
+            haskell/dist-newstyle
+          key: haskell-cache-${{ hashFiles('haskell/weather.cabal', 'haskell/cabal.project') }}
+          restore-keys: haskell-cache-
+
       - name: Generate weather forecast HTML (Haskell)
         working-directory: haskell
         run: just run
