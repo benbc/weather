@@ -1,21 +1,8 @@
 cradle:
-  multi:
-    - path: "test/Spec.hs"
-      config:
-        cradle:
-          none:
+  cabal:
     - path: "src"
-      config:
-        cradle:
-          cabal:
-            component: "lib:weather"
+      component: "lib:weather"
     - path: "app"
-      config:
-        cradle:
-          cabal:
-            component: "exe:weather"
+      component: "exe:weather"
     - path: "test"
-      config:
-        cradle:
-          cabal:
-            component: "test:spec"
+      component: "test:spec"
