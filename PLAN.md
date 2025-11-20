@@ -14,6 +14,6 @@
 - [x] caching for Haskell build intermediates
 - [x] Get Zed integration working
 - [x] Add equivalent of ruff check/format for Haskell
-- [ ] Style Haskell output so it looks roughly like Python output
+- [x] Style Haskell output so it looks roughly like Python output
 
 ## Current task
