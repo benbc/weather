@@ -13,7 +13,7 @@
 - [x] separate python/haskell updates into two different jobs (can they run in parallel?)
 - [x] caching for Haskell build intermediates
 - [x] Get Zed integration working
-- [ ] Add equivalent of ruff check/format for Haskell
+- [x] Add equivalent of ruff check/format for Haskell
 - [ ] Style Haskell output so it looks roughly like Python output
 
 ## Current task

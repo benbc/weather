@@ -10,6 +10,13 @@ test match="":
     fi
 
 verify:
+    ormolu --mode check $(find src app test -name '*.hs')
     cabal build
     cabal test
     cabal run weather
+
+fix:
+    ormolu --mode inplace $(find src app test -name '*.hs')
+
+dependencies:
+    cabal install ormolu
