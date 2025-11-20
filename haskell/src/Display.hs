@@ -65,17 +65,17 @@ forecastTemplate =
                   margin: 0 0 8px 0;
                   font-size: 1.4em;
               }
-              dl {
-                  margin: 10px 0;
-              }
-              dt {
-                  font-weight: bold;
+              .forecast-content h3 {
                   color: #2c3e50;
-                  margin-top: 8px;
+                  margin: 12px 0 8px 0;
+                  font-size: 1.1em;
               }
-              dd {
-                  margin: 4px 0 4px 20px;
+              .forecast-content p {
+                  margin: 6px 0;
                   color: #34495e;
+              }
+              .forecast-content strong {
+                  color: #2c3e50;
               }
               .last-updated {
                   text-align: center;
@@ -105,27 +105,19 @@ forecastTemplate =
           <div class="forecast-content">
               <h2>{{forecast.areaName}}</h2>
               <h3>24 Hour Forecast</h3>
-              <dl>
-                  <dt>Wind</dt>
-                  <dd>{{forecast.current24Hours.wind}}</dd>
-                  <dt>Sea State</dt>
-                  <dd>{{forecast.current24Hours.sea}}</dd>
-                  <dt>Weather</dt>
-                  <dd>{{forecast.current24Hours.weather}}</dd>
-                  <dt>Visibility</dt>
-                  <dd>{{forecast.current24Hours.visibility}}</dd>
-              </dl>
+              <p><strong>Wind:</strong> {{forecast.current24Hours.wind}}</p>
+              <p><strong>Sea state:</strong> {{forecast.current24Hours.sea}}</p>
+              <p>
+                <strong>Weather:</strong> {{forecast.current24Hours.weather}}
+                <strong>Visibility:</strong> {{forecast.current24Hours.visibility}}
+              </p>
               <h3>Next 24 Hours</h3>
-              <dl>
-                  <dt>Wind</dt>
-                  <dd>{{forecast.next24Hours.wind}}</dd>
-                  <dt>Sea State</dt>
-                  <dd>{{forecast.next24Hours.sea}}</dd>
-                  <dt>Weather</dt>
-                  <dd>{{forecast.next24Hours.weather}}</dd>
-                  <dt>Visibility</dt>
-                  <dd>{{forecast.next24Hours.visibility}}</dd>
-              </dl>
+              <p><strong>Wind:</strong> {{forecast.next24Hours.wind}}</p>
+              <p><strong>Sea state:</strong> {{forecast.next24Hours.sea}}</p>
+              <p>
+                <strong>Weather:</strong> {{forecast.next24Hours.weather}}
+                <strong>Visibility:</strong> {{forecast.next24Hours.visibility}}
+              </p>
           </div>
           <div class="last-updated">Last updated: {{lastUpdated}}</div>
       </body>
