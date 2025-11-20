@@ -4,7 +4,8 @@
 module Forecast (inshoreWatersUrl, parse, AreaForecast (..), ForecastPeriod (..)) where
 
 import GHC.Generics (Generic)
-import Text.HTML.Scalpel
+import Text.HTML.Scalpel hiding (match)
+import Text.Regex.TDFA ((=~))
 
 data ForecastPeriod = ForecastPeriod
   { wind :: String,
@@ -29,13 +30,16 @@ parse page = scrapeStringLike page forecastScraper
 
 forecastScraper :: Scraper String AreaForecast
 forecastScraper = chroot (areas // area8) $ do
-  name <- text "h2"
+  title <- text "h2"
   [current, next] <- chroots forecastInfo forecastPeriodScraper
-  return $ AreaForecast name current next
+  return $ AreaForecast (stripAreaNumber title) current next
   where
     areas = "div" @: ["id" @= "inshore-waters-areas"]
     area8 = "section" @: ["aria-labelledby" @= "area8"]
     forecastInfo = "div" @: ["class" @= "forecast-info"]
+    stripAreaNumber title = name
+      where
+        (name, _ :: String, _ :: String) = title =~ (" \\([0-9]+\\)$" :: String)
 
 forecastPeriodScraper :: Scraper String ForecastPeriod
 forecastPeriodScraper = do

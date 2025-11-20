@@ -31,7 +31,8 @@ library
         mustache,
         aeson,
         text,
-        time
+        time,
+        regex-tdfa
     hs-source-dirs: src
     default-language: GHC2021
     ghc-options: -Wall -Werror -fplugin=Polysemy.Plugin -O2 -flate-specialise -fspecialise-aggressively

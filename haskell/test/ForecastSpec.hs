@@ -14,7 +14,7 @@ spec = do
   where
     expected =
       AreaForecast
-        { areaName = "Lyme Regis to Lands End including the Isles of Scilly (8)",
+        { areaName = "Lyme Regis to Lands End including the Isles of Scilly",
           current24Hours =
             ForecastPeriod
               { wind = "Southwest 5",
