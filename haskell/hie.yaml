@@ -4,13 +4,18 @@ cradle:
       config:
         cradle:
           none:
-    - path: "./"
+    - path: "src"
       config:
         cradle:
           cabal:
-            - path: "src"
-              component: "lib:weather"
-            - path: "app"
-              component: "exe:weather"
-            - path: "test"
-              component: "test:spec"
+            component: "lib:weather"
+    - path: "app"
+      config:
+        cradle:
+          cabal:
+            component: "exe:weather"
+    - path: "test"
+      config:
+        cradle:
+          cabal:
+            component: "test:spec"
